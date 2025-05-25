@@ -64,7 +64,21 @@ export default function EditEmployeePage() {
 
   const form = useForm<NewEmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
-    // Default values will be set by useEffect once employeeToEdit is available
+    defaultValues: { // Initialize all fields to ensure they are controlled
+      name: "",
+      position: "",
+      department: "",
+      idNumber: "",
+      email: "",
+      officeLocation: "",
+      mobile: "",
+      phone: "",
+      fax: "",
+      reportsTo: [],
+      directReports: [],
+      hiringDate: undefined, // Calendar component handles undefined
+      hiredBy: "",
+    },
   });
 
   useEffect(() => {
