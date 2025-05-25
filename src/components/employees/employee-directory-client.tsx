@@ -1,0 +1,87 @@
+"use client";
+
+import type { Employee } from '@/lib/placeholder-data';
+import { useState, useMemo } from 'react';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Mail, Phone, Briefcase, Building, UserCircle } from 'lucide-react';
+
+interface EmployeeCardProps {
+  employee: Employee;
+}
+
+function EmployeeCard({ employee }: EmployeeCardProps) {
+  return (
+    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="flex flex-row items-center space-x-4 pb-4">
+        <Avatar className="h-16 w-16">
+          <AvatarImage src={employee.avatarUrl} alt={employee.name} data-ai-hint={employee.dataAiHint} />
+          <AvatarFallback>
+            <UserCircle className="h-10 w-10 text-muted-foreground" />
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <CardTitle className="text-xl">{employee.name}</CardTitle>
+          <CardDescription>{employee.jobTitle}</CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Building className="h-4 w-4" />
+          <span>{employee.department}</span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Mail className="h-4 w-4" />
+          <a href={`mailto:${employee.email}`} className="hover:text-primary transition-colors">
+            {employee.email}
+          </a>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Phone className="h-4 w-4" />
+          <span>{employee.phone}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface EmployeeDirectoryClientProps {
+  initialEmployees: Employee[];
+}
+
+export function EmployeeDirectoryClient({ initialEmployees }: EmployeeDirectoryClientProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredEmployees = useMemo(() => {
+    if (!searchTerm) return initialEmployees;
+    return initialEmployees.filter(
+      (employee) =>
+        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, initialEmployees]);
+
+  return (
+    <div className="space-y-6">
+      <Input
+        type="search"
+        placeholder="Search employees by name, title, or department..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="max-w-md text-base"
+      />
+      {filteredEmployees.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredEmployees.map((employee) => (
+            <EmployeeCard key={employee.id} employee={employee} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-muted-foreground py-8">No employees found matching your search.</p>
+      )}
+    </div>
+  );
+}
