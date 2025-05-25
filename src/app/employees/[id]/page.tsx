@@ -1,15 +1,15 @@
 
 "use client";
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEmployees } from '@/contexts/employee-context';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { 
   Mail, Phone, Briefcase, Building, UserCircle, ArrowLeft, Fingerprint, 
-  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog
+  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface DetailItemProps {
 }
 
 function DetailItem({ icon: Icon, label, value, isLink, href }: DetailItemProps) {
-  if (!value && typeof value !== 'number') return null;
+  if (!value && typeof value !== 'number' && typeof value !== 'boolean') return null;
 
   const content = isLink && href ? (
     <a href={href} className="hover:text-primary hover:underline transition-colors">
@@ -49,6 +49,7 @@ function DetailItem({ icon: Icon, label, value, isLink, href }: DetailItemProps)
 
 export default function EmployeeProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const { id } = params;
   const { employees } = useEmployees();
 
@@ -85,12 +86,20 @@ export default function EmployeeProfilePage() {
         title={employee.name} 
         description={employee.jobTitle}
         actions={
-          <Link href="/employees" passHref>
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Directory
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href={`/employees/${id}/edit`} passHref>
+              <Button variant="outline">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Profile
+              </Button>
+            </Link>
+            <Link href="/employees" passHref>
+              <Button variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Directory
+              </Button>
+            </Link>
+          </div>
         }
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

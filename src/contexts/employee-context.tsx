@@ -9,6 +9,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 interface EmployeeContextType {
   employees: Employee[];
   addEmployee: (employeeData: NewEmployeeFormValues) => void;
+  updateEmployee: (id: string, employeeData: NewEmployeeFormValues) => void;
 }
 
 const EmployeeContext = createContext<EmployeeContextType | undefined>(undefined);
@@ -23,11 +24,10 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
       jobTitle: employeeData.position,
       department: employeeData.department || "N/A",
       email: employeeData.email,
-      phone: employeeData.phone || "N/A", // Keep office phone primarily
+      phone: employeeData.phone || "N/A",
       avatarUrl: 'https://placehold.co/100x100.png', 
       dataAiHint: 'new profile', 
       
-      // Adding all new fields from the form
       idNumber: employeeData.idNumber,
       officeLocation: employeeData.officeLocation,
       mobile: employeeData.mobile,
@@ -40,8 +40,34 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
     setEmployees((prevEmployees) => [newEmployee, ...prevEmployees]);
   };
 
+  const updateEmployee = (id: string, employeeData: NewEmployeeFormValues) => {
+    setEmployees((prevEmployees) =>
+      prevEmployees.map((emp) =>
+        emp.id === id
+          ? {
+              ...emp,
+              name: employeeData.name,
+              jobTitle: employeeData.position,
+              department: employeeData.department || emp.department,
+              email: employeeData.email,
+              phone: employeeData.phone || emp.phone,
+              // avatarUrl and dataAiHint could be updated if form allows image upload
+              idNumber: employeeData.idNumber,
+              officeLocation: employeeData.officeLocation,
+              mobile: employeeData.mobile,
+              fax: employeeData.fax,
+              reportsTo: employeeData.reportsTo,
+              directReports: employeeData.directReports,
+              hiringDate: employeeData.hiringDate ? new Date(employeeData.hiringDate).toISOString() : emp.hiringDate,
+              hiredBy: employeeData.hiredBy,
+            }
+          : emp
+      )
+    );
+  };
+
   return (
-    <EmployeeContext.Provider value={{ employees, addEmployee }}>
+    <EmployeeContext.Provider value={{ employees, addEmployee, updateEmployee }}>
       {children}
     </EmployeeContext.Provider>
   );
