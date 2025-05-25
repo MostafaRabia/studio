@@ -3,7 +3,7 @@
 
 import type { Employee } from '@/lib/placeholder-data';
 import { employees as initialEmployeesData } from '@/lib/placeholder-data';
-import type { NewEmployeeFormValues } from '@/app/employees/new/page'; // Assuming this type is exported
+import type { NewEmployeeFormValues } from '@/app/employees/new/page'; 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface EmployeeContextType {
@@ -18,17 +18,24 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
 
   const addEmployee = (employeeData: NewEmployeeFormValues) => {
     const newEmployee: Employee = {
-      id: Date.now().toString(), // Simple ID generation for prototype
+      id: Date.now().toString(), 
       name: employeeData.name,
       jobTitle: employeeData.position,
-      department: employeeData.department || "N/A", // Ensure department is handled
+      department: employeeData.department || "N/A",
       email: employeeData.email,
-      phone: employeeData.phone || employeeData.mobile || "N/A", // Prioritize office phone
-      avatarUrl: 'https://placehold.co/100x100.png', // Default avatar
-      dataAiHint: 'new profile', // Default AI hint
-      // Note: reportsTo and directReports are not part of the base Employee type
-      // and are not directly stored on the employee object in this simple context.
-      // This context focuses on the list of employees themselves.
+      phone: employeeData.phone || "N/A", // Keep office phone primarily
+      avatarUrl: 'https://placehold.co/100x100.png', 
+      dataAiHint: 'new profile', 
+      
+      // Adding all new fields from the form
+      idNumber: employeeData.idNumber,
+      officeLocation: employeeData.officeLocation,
+      mobile: employeeData.mobile,
+      fax: employeeData.fax,
+      reportsTo: employeeData.reportsTo,
+      directReports: employeeData.directReports,
+      hiringDate: employeeData.hiringDate ? new Date(employeeData.hiringDate).toISOString() : undefined,
+      hiredBy: employeeData.hiredBy,
     };
     setEmployees((prevEmployees) => [newEmployee, ...prevEmployees]);
   };

@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { FileText, ExternalLink, ShieldCheck, Handshake } from 'lucide-react';
 import Image from 'next/image';
@@ -12,6 +13,16 @@ export interface Employee {
   email: string;
   phone: string;
   dataAiHint?: string;
+
+  // Additional fields from the new employee form
+  idNumber?: string;
+  officeLocation?: string;
+  mobile?: string;
+  fax?: string;
+  reportsTo?: string[]; // Array of employee IDs
+  directReports?: string[]; // Array of employee IDs
+  hiringDate?: string; // Store as ISO string for consistency
+  hiredBy?: string;
 }
 
 export interface Announcement {
@@ -44,6 +55,12 @@ export const employees: Employee[] = [
     jobTitle: 'Software Engineer',
     email: 'alice.w@example.com',
     phone: '555-0101',
+    idNumber: 'EMP001',
+    officeLocation: 'Building A, Floor 1',
+    mobile: '555-0201',
+    hiringDate: new Date('2022-08-15').toISOString(),
+    hiredBy: 'Bob The Builder',
+    reportsTo: ['2'], // Bob The Builder's ID
   },
   {
     id: '2',
@@ -54,6 +71,8 @@ export const employees: Employee[] = [
     jobTitle: 'Product Manager',
     email: 'bob.b@example.com',
     phone: '555-0102',
+    idNumber: 'EMP002',
+    directReports: ['1'], // Alice Wonderland's ID
   },
   {
     id: '3',
@@ -64,6 +83,7 @@ export const employees: Employee[] = [
     jobTitle: 'Marketing Lead',
     email: 'carol.d@example.com',
     phone: '555-0103',
+    idNumber: 'EMP003',
   },
   {
     id: '4',
@@ -74,6 +94,7 @@ export const employees: Employee[] = [
     jobTitle: 'Sales Executive',
     email: 'david.c@example.com',
     phone: '555-0104',
+    idNumber: 'EMP004',
   },
     {
     id: '5',
@@ -84,6 +105,7 @@ export const employees: Employee[] = [
     jobTitle: 'HR Specialist',
     email: 'eve.h@example.com',
     phone: '555-0105',
+    idNumber: 'EMP005',
   },
   {
     id: '6',
@@ -94,6 +116,7 @@ export const employees: Employee[] = [
     jobTitle: 'Operations Manager',
     email: 'frank.c@example.com',
     phone: '555-0106',
+    idNumber: 'EMP006',
   },
 ];
 
