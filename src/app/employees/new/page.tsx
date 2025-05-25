@@ -1,11 +1,11 @@
 
-"use client"; // Top-level page itself needs to be client if it directly uses hooks like useRouter for cancel
+"use client"; 
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // For cancel button
+import { useRouter } from 'next/navigation'; 
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint } from "lucide-react";
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown } from "lucide-react";
+import { employees as existingEmployees } from '@/lib/placeholder-data'; // Import existing employees
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import React from "react";
 
 const newEmployeeFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
@@ -36,7 +40,7 @@ const newEmployeeFormSchema = z.object({
   mobile: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid mobile number format." }),
   phone: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid phone number format." }),
   fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
-  reportsTo: z.string().max(100).optional(), // Manager
+  reportsTo: z.array(z.string()).optional().default([]), // Manager(s) - array of employee IDs
   directReports: z.string().max(500).optional(), // People reporting to this new employee
   hiringDate: z.date({
     required_error: "Hiring date is required.",
@@ -59,7 +63,7 @@ export default function NewEmployeePage() {
       mobile: "",
       phone: "",
       fax: "",
-      reportsTo: "",
+      reportsTo: [],
       directReports: "",
       hiredBy: "",
       // hiringDate will be undefined initially, user must pick one
@@ -73,6 +77,13 @@ export default function NewEmployeePage() {
     // Optionally, redirect or show a success message
     router.push('/employees'); // Redirect to employee list after submission for now
   };
+
+  const selectedReportsToNames = React.useMemo(() => {
+    const selectedIds = form.watch('reportsTo') || [];
+    return selectedIds
+      .map(id => existingEmployees.find(emp => emp.id === id)?.name)
+      .filter(name => !!name) as string[];
+  }, [form.watch('reportsTo')]);
 
   return (
     <>
@@ -214,20 +225,57 @@ export default function NewEmployeePage() {
               />
               </div>
 
-
               <FormField
                 control={form.control}
                 name="reportsTo"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reports To (Manager)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Jane Smith (Manager ID)" {...field} />
-                    </FormControl>
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="flex items-center">
+                      <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Reports To (Manager/s)
+                    </FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <FormControl>
+                          <Button variant="outline" className={cn("w-full justify-between", !field.value?.length && "text-muted-foreground")}>
+                            {selectedReportsToNames.length > 0 
+                              ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedReportsToNames.slice(0,2).map(name => <Badge key={name} variant="secondary">{name}</Badge>)}
+                                  {selectedReportsToNames.length > 2 && <Badge variant="secondary">+{selectedReportsToNames.length - 2} more</Badge>}
+                                </div>
+                                )
+                              : "Select manager(s)"}
+                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
+                        <DropdownMenuLabel>Select Managers</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {existingEmployees.map((employee) => (
+                          <DropdownMenuCheckboxItem
+                            key={employee.id}
+                            checked={field.value?.includes(employee.id)}
+                            onCheckedChange={(checked) => {
+                              const currentValue = field.value || [];
+                              if (checked) {
+                                field.onChange([...currentValue, employee.id]);
+                              } else {
+                                field.onChange(currentValue.filter((id) => id !== employee.id));
+                              }
+                            }}
+                          >
+                            {employee.name} ({employee.jobTitle})
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
 
               <FormField
                 control={form.control}
@@ -243,7 +291,7 @@ export default function NewEmployeePage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Who will report to this new employee?
+                      Who will report to this new employee? (Enter names or IDs)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
