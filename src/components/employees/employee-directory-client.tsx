@@ -4,6 +4,7 @@
 import type { Employee } from '@/lib/placeholder-data';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,7 +20,6 @@ function EmployeeCard({ employee }: EmployeeCardProps) {
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center space-x-4 pb-4">
         <Avatar className="h-16 w-16">
-          {/* Use next/image for optimized images if avatarUrl is present */}
           {employee.avatarUrl ? (
             <AvatarImage src={employee.avatarUrl} alt={employee.name} asChild>
               <Image src={employee.avatarUrl} alt={employee.name} width={64} height={64} data-ai-hint={employee.dataAiHint || 'profile picture'} />
@@ -30,7 +30,11 @@ function EmployeeCard({ employee }: EmployeeCardProps) {
           </AvatarFallback>
         </Avatar>
         <div>
-          <CardTitle className="text-xl">{employee.name}</CardTitle>
+          <Link href={`/employees/${employee.id}`} passHref>
+            <CardTitle className="text-xl hover:text-primary hover:underline cursor-pointer transition-colors">
+              {employee.name}
+            </CardTitle>
+          </Link>
           <CardDescription>{employee.jobTitle}</CardDescription>
         </div>
       </CardHeader>
@@ -54,17 +58,12 @@ function EmployeeCard({ employee }: EmployeeCardProps) {
   );
 }
 
-// Removed InitialEmployees prop as we now use context
-// interface EmployeeDirectoryClientProps {
-//   initialEmployees: Employee[];
-// }
-
 export function EmployeeDirectoryClient() {
-  const { employees } = useEmployees(); // Get employees from context
+  const { employees } = useEmployees(); 
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredEmployees = useMemo(() => {
-    const employeesToFilter = employees || []; // Handle case where context might not be ready (though unlikely)
+    const employeesToFilter = employees || []; 
     if (!searchTerm) return employeesToFilter;
     return employeesToFilter.filter(
       (employee) =>
