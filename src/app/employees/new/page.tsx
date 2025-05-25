@@ -33,12 +33,12 @@ const newEmployeeFormSchema = z.object({
   mobile: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid mobile number format." }),
   phone: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid phone number format." }),
   fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
-  reportsTo: z.string().optional().max(100), // Manager
-  directReports: z.string().optional().max(500), // People reporting to this new employee
+  reportsTo: z.string().max(100).optional(), // Manager
+  directReports: z.string().max(500).optional(), // People reporting to this new employee
   hiringDate: z.date({
     required_error: "Hiring date is required.",
   }),
-  hiredBy: z.string().optional().max(100),
+  hiredBy: z.string().max(100).optional(),
 });
 
 type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
