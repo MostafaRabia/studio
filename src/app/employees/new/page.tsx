@@ -25,11 +25,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X } from "lucide-react";
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint } from "lucide-react";
 
 const newEmployeeFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   position: z.string().min(2, { message: "Position must be at least 2 characters." }).max(100),
+  idNumber: z.string().min(1, { message: "ID number is required." }).max(50),
+  email: z.string().email({ message: "Invalid email address." }).min(5).max(100),
+  officeLocation: z.string().max(100).optional(),
   mobile: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid mobile number format." }),
   phone: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid phone number format." }),
   fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
@@ -50,6 +53,9 @@ export default function NewEmployeePage() {
     defaultValues: {
       name: "",
       position: "",
+      idNumber: "",
+      email: "",
+      officeLocation: "",
       mobile: "",
       phone: "",
       fax: "",
@@ -112,6 +118,41 @@ export default function NewEmployeePage() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="idNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Fingerprint className="mr-2 h-4 w-4 text-muted-foreground" />
+                      ID Number
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., EMP12345" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <AtSign className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Email Address
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="e.g., john.doe@company.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -141,19 +182,38 @@ export default function NewEmployeePage() {
                 />
               </div>
               
-              <FormField
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="fax"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fax Number</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="e.g., +1-555-111-2222" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
                 control={form.control}
-                name="fax"
+                name="officeLocation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fax Number</FormLabel>
+                    <FormLabel className="flex items-center">
+                       <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Office Location
+                    </FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="e.g., +1-555-111-2222" {...field} />
+                      <Input placeholder="e.g., Building A, Floor 3" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              </div>
+
 
               <FormField
                 control={form.control}
