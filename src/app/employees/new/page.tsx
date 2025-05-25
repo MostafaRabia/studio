@@ -6,6 +6,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; 
+import React from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,45 +19,51 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck } from "lucide-react";
-import { employees as existingEmployees } from '@/lib/placeholder-data'; // Import existing employees
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase } from "lucide-react";
+import { employees as existingEmployeesForSelection } from '@/lib/placeholder-data'; 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import React from "react";
+import { useEmployees } from "@/contexts/employee-context";
+import { useToast } from "@/hooks/use-toast";
+
 
 const newEmployeeFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   position: z.string().min(2, { message: "Position must be at least 2 characters." }).max(100),
+  department: z.string().min(2, { message: "Department is required." }).max(100),
   idNumber: z.string().min(1, { message: "ID number is required." }).max(50),
   email: z.string().email({ message: "Invalid email address." }).min(5).max(100),
   officeLocation: z.string().max(100).optional(),
   mobile: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid mobile number format." }),
   phone: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid phone number format." }),
   fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
-  reportsTo: z.array(z.string()).optional().default([]), // Manager(s) - array of employee IDs
-  directReports: z.array(z.string()).optional().default([]), // People reporting to this new employee - array of employee IDs
+  reportsTo: z.array(z.string()).optional().default([]), 
+  directReports: z.array(z.string()).optional().default([]),
   hiringDate: z.date({
     required_error: "Hiring date is required.",
   }),
   hiredBy: z.string().max(100).optional(),
 });
 
-type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
+export type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
 
 export default function NewEmployeePage() {
   const router = useRouter();
+  const { addEmployee } = useEmployees();
+  const { toast } = useToast();
+
   const form = useForm<NewEmployeeFormValues>({
     resolver: zodResolver(newEmployeeFormSchema),
     defaultValues: {
       name: "",
       position: "",
+      department: "",
       idNumber: "",
       email: "",
       officeLocation: "",
@@ -66,29 +73,30 @@ export default function NewEmployeePage() {
       reportsTo: [],
       directReports: [],
       hiredBy: "",
-      // hiringDate will be undefined initially, user must pick one
     },
   });
 
   const onSubmit: SubmitHandler<NewEmployeeFormValues> = (data) => {
-    console.log("New Employee Data:", data);
-    // Here you would typically send the data to your backend
-    // For now, we just log it.
-    // Optionally, redirect or show a success message
-    router.push('/employees'); // Redirect to employee list after submission for now
+    console.log("New Employee Data to be added:", data);
+    addEmployee(data);
+    toast({
+      title: "Employee Added",
+      description: `${data.name} has been successfully added to the directory.`,
+    });
+    router.push('/employees'); 
   };
 
   const selectedReportsToNames = React.useMemo(() => {
     const selectedIds = form.watch('reportsTo') || [];
     return selectedIds
-      .map(id => existingEmployees.find(emp => emp.id === id)?.name)
+      .map(id => existingEmployeesForSelection.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
   }, [form.watch('reportsTo')]);
 
   const selectedDirectReportsNames = React.useMemo(() => {
     const selectedIds = form.watch('directReports') || [];
     return selectedIds
-      .map(id => existingEmployees.find(emp => emp.id === id)?.name)
+      .map(id => existingEmployeesForSelection.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
   }, [form.watch('directReports')]);
 
@@ -122,19 +130,37 @@ export default function NewEmployeePage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Position / Job Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Software Engineer" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position / Job Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Software Engineer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+                        Department
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Engineering" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -169,7 +195,6 @@ export default function NewEmployeePage() {
                   </FormItem>
                 )}
               />
-
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
@@ -260,7 +285,7 @@ export default function NewEmployeePage() {
                       <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
                         <DropdownMenuLabel>Select Managers</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {existingEmployees.map((employee) => (
+                        {existingEmployeesForSelection.map((employee) => (
                           <DropdownMenuCheckboxItem
                             key={employee.id}
                             checked={field.value?.includes(employee.id)}
@@ -311,7 +336,7 @@ export default function NewEmployeePage() {
                       <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
                         <DropdownMenuLabel>Select Team Members</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {existingEmployees.map((employee) => (
+                        {existingEmployeesForSelection.map((employee) => (
                           <DropdownMenuCheckboxItem
                             key={employee.id}
                             checked={field.value?.includes(employee.id)}
@@ -412,4 +437,3 @@ export default function NewEmployeePage() {
     </>
   );
 }
-

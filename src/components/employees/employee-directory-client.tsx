@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Employee } from '@/lib/placeholder-data';
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Mail, Phone, Briefcase, Building, UserCircle } from 'lucide-react';
+import { useEmployees } from '@/contexts/employee-context';
 
 interface EmployeeCardProps {
   employee: Employee;
@@ -17,7 +19,12 @@ function EmployeeCard({ employee }: EmployeeCardProps) {
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center space-x-4 pb-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={employee.avatarUrl} alt={employee.name} data-ai-hint={employee.dataAiHint} />
+          {/* Use next/image for optimized images if avatarUrl is present */}
+          {employee.avatarUrl ? (
+            <AvatarImage src={employee.avatarUrl} alt={employee.name} asChild>
+              <Image src={employee.avatarUrl} alt={employee.name} width={64} height={64} data-ai-hint={employee.dataAiHint || 'profile picture'} />
+            </AvatarImage>
+          ) : null}
           <AvatarFallback>
             <UserCircle className="h-10 w-10 text-muted-foreground" />
           </AvatarFallback>
@@ -47,22 +54,25 @@ function EmployeeCard({ employee }: EmployeeCardProps) {
   );
 }
 
-interface EmployeeDirectoryClientProps {
-  initialEmployees: Employee[];
-}
+// Removed InitialEmployees prop as we now use context
+// interface EmployeeDirectoryClientProps {
+//   initialEmployees: Employee[];
+// }
 
-export function EmployeeDirectoryClient({ initialEmployees }: EmployeeDirectoryClientProps) {
+export function EmployeeDirectoryClient() {
+  const { employees } = useEmployees(); // Get employees from context
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredEmployees = useMemo(() => {
-    if (!searchTerm) return initialEmployees;
-    return initialEmployees.filter(
+    const employeesToFilter = employees || []; // Handle case where context might not be ready (though unlikely)
+    if (!searchTerm) return employeesToFilter;
+    return employeesToFilter.filter(
       (employee) =>
         employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm, initialEmployees]);
+  }, [searchTerm, employees]);
 
   return (
     <div className="space-y-6">
@@ -80,7 +90,9 @@ export function EmployeeDirectoryClient({ initialEmployees }: EmployeeDirectoryC
           ))}
         </div>
       ) : (
-        <p className="text-center text-muted-foreground py-8">No employees found matching your search.</p>
+        <p className="text-center text-muted-foreground py-8">
+          {searchTerm ? "No employees found matching your search." : "No employees in the directory yet."}
+        </p>
       )}
     </div>
   );
