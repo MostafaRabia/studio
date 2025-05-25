@@ -25,7 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown } from "lucide-react";
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck } from "lucide-react";
 import { employees as existingEmployees } from '@/lib/placeholder-data'; // Import existing employees
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,7 @@ const newEmployeeFormSchema = z.object({
   phone: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid phone number format." }),
   fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
   reportsTo: z.array(z.string()).optional().default([]), // Manager(s) - array of employee IDs
-  directReports: z.string().max(500).optional(), // People reporting to this new employee
+  directReports: z.array(z.string()).optional().default([]), // People reporting to this new employee - array of employee IDs
   hiringDate: z.date({
     required_error: "Hiring date is required.",
   }),
@@ -64,7 +64,7 @@ export default function NewEmployeePage() {
       phone: "",
       fax: "",
       reportsTo: [],
-      directReports: "",
+      directReports: [],
       hiredBy: "",
       // hiringDate will be undefined initially, user must pick one
     },
@@ -84,6 +84,13 @@ export default function NewEmployeePage() {
       .map(id => existingEmployees.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
   }, [form.watch('reportsTo')]);
+
+  const selectedDirectReportsNames = React.useMemo(() => {
+    const selectedIds = form.watch('directReports') || [];
+    return selectedIds
+      .map(id => existingEmployees.find(emp => emp.id === id)?.name)
+      .filter(name => !!name) as string[];
+  }, [form.watch('directReports')]);
 
   return (
     <>
@@ -276,22 +283,54 @@ export default function NewEmployeePage() {
                 )}
               />
 
-
               <FormField
                 control={form.control}
                 name="directReports"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Direct Reports</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="List names or IDs of employees who will report to this person, e.g., Alice Wonderland, Bob The Builder"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Who will report to this new employee? (Enter names or IDs)
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="flex items-center">
+                      <UserCheck className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Direct Reports (Team Members)
+                    </FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <FormControl>
+                          <Button variant="outline" className={cn("w-full justify-between", !field.value?.length && "text-muted-foreground")}>
+                            {selectedDirectReportsNames.length > 0 
+                              ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedDirectReportsNames.slice(0,2).map(name => <Badge key={name} variant="secondary">{name}</Badge>)}
+                                  {selectedDirectReportsNames.length > 2 && <Badge variant="secondary">+{selectedDirectReportsNames.length - 2} more</Badge>}
+                                </div>
+                                )
+                              : "Select team member(s)"}
+                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
+                        <DropdownMenuLabel>Select Team Members</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {existingEmployees.map((employee) => (
+                          <DropdownMenuCheckboxItem
+                            key={employee.id}
+                            checked={field.value?.includes(employee.id)}
+                            onCheckedChange={(checked) => {
+                              const currentValue = field.value || [];
+                              if (checked) {
+                                field.onChange([...currentValue, employee.id]);
+                              } else {
+                                field.onChange(currentValue.filter((id) => id !== employee.id));
+                              }
+                            }}
+                          >
+                            {employee.name} ({employee.jobTitle})
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                     <FormDescription>
+                      Who will report to this new employee?
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
