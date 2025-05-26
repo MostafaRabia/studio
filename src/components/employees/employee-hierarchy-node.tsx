@@ -11,30 +11,29 @@ import { UserCircle, Briefcase } from 'lucide-react';
 interface EmployeeHierarchyNodeProps {
   employee: Employee;
   allEmployees: Employee[];
-  level: number;
 }
 
-export function EmployeeHierarchyNode({ employee, allEmployees, level }: EmployeeHierarchyNodeProps) {
+export function EmployeeHierarchyNode({ employee, allEmployees }: EmployeeHierarchyNodeProps) {
   const directReports = allEmployees.filter(emp => employee.directReports?.includes(emp.id));
   const displayAvatarSrc = employee.avatarDataUrl || employee.avatarUrl;
 
   return (
-    <div style={{ marginLeft: `${level * 2}rem` }} className="my-4">
+    <div className="my-2"> {/* Reduced vertical margin, removed style-based marginLeft */}
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="flex flex-row items-center space-x-3 pb-3">
-          <Avatar className="h-12 w-12">
+        <CardHeader className="flex flex-row items-center space-x-3 p-3"> {/* Compact padding */}
+          <Avatar className="h-10 w-10"> {/* Smaller avatar */}
             {displayAvatarSrc ? (
               <AvatarImage src={displayAvatarSrc} alt={employee.name} asChild>
-                <Image src={displayAvatarSrc} alt={employee.name} width={48} height={48} data-ai-hint={employee.dataAiHint || 'profile picture'} />
+                <Image src={displayAvatarSrc} alt={employee.name} width={40} height={40} data-ai-hint={employee.dataAiHint || 'profile picture'} />
               </AvatarImage>
             ) : null}
             <AvatarFallback>
-              <UserCircle className="h-8 w-8 text-muted-foreground" />
+              <UserCircle className="h-6 w-6 text-muted-foreground" /> {/* Adjusted icon size for smaller avatar */}
             </AvatarFallback>
           </Avatar>
           <div>
             <Link href={`/employees/${employee.id}`} passHref>
-              <CardTitle className="text-lg hover:text-primary hover:underline cursor-pointer transition-colors">
+              <CardTitle className="text-base hover:text-primary hover:underline cursor-pointer transition-colors"> {/* Smaller title */}
                 {employee.name}
               </CardTitle>
             </Link>
@@ -44,17 +43,17 @@ export function EmployeeHierarchyNode({ employee, allEmployees, level }: Employe
             </CardDescription>
           </div>
         </CardHeader>
-        {/* You can add more details to CardContent if needed */}
+        {/* CardContent can be added here if more details per node are needed later */}
       </Card>
 
       {directReports.length > 0 && (
-        <div className="mt-2 border-l-2 border-primary/50 pl-4">
+        <div className="mt-2 border-l-2 border-primary/50 pl-4"> {/* Indentation and connector line for children */}
           {directReports.map(report => (
             <EmployeeHierarchyNode
               key={report.id}
               employee={report}
               allEmployees={allEmployees}
-              level={level + 1}
+              // No 'level' prop passed down anymore
             />
           ))}
         </div>

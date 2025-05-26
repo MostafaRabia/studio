@@ -54,13 +54,13 @@ export default function EmployeeHierarchyPage() {
               <p className="text-muted-foreground">No employees in the directory to display a hierarchy.</p>
             </div>
           ) : rootEmployees.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4"> {/* Adjusted spacing if needed */}
               {rootEmployees.map(employee => (
                 <EmployeeHierarchyNode
                   key={employee.id}
                   employee={employee}
                   allEmployees={employees}
-                  level={0}
+                  // Removed level={0} prop
                 />
               ))}
             </div>
