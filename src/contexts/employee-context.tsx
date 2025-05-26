@@ -25,8 +25,8 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
       department: employeeData.department || "N/A",
       email: employeeData.email,
       phone: employeeData.phone || "N/A",
-      avatarUrl: 'https://placehold.co/100x100.png', 
-      dataAiHint: 'new profile', 
+      avatarDataUrl: employeeData.avatarDataUrl, 
+      dataAiHint: employeeData.avatarDataUrl ? 'custom profile' : 'new profile', 
       
       idNumber: employeeData.idNumber,
       officeLocation: employeeData.officeLocation,
@@ -51,7 +51,8 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
               department: employeeData.department || emp.department,
               email: employeeData.email,
               phone: employeeData.phone || emp.phone,
-              // avatarUrl and dataAiHint could be updated if form allows image upload
+              avatarDataUrl: employeeData.avatarDataUrl || emp.avatarDataUrl, // Preserve if not changed
+              dataAiHint: employeeData.avatarDataUrl ? 'custom profile' : emp.dataAiHint,
               idNumber: employeeData.idNumber,
               officeLocation: employeeData.officeLocation,
               mobile: employeeData.mobile,

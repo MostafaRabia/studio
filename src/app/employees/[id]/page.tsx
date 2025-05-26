@@ -80,6 +80,8 @@ export default function EmployeeProfilePage() {
   const reportsToNames = employee.reportsTo?.map(getEmployeeNameById).join(', ');
   const directReportsNames = employee.directReports?.map(getEmployeeNameById).join(', ');
 
+  const displayAvatarSrc = employee.avatarDataUrl || employee.avatarUrl;
+
   return (
     <>
       <PageHeader 
@@ -106,9 +108,9 @@ export default function EmployeeProfilePage() {
         <Card className="md:col-span-1 shadow-lg">
           <CardHeader className="items-center text-center">
             <Avatar className="h-32 w-32 mb-4">
-              {employee.avatarUrl ? (
-                <AvatarImage src={employee.avatarUrl} alt={employee.name} asChild>
-                  <Image src={employee.avatarUrl} alt={employee.name} width={128} height={128} data-ai-hint={employee.dataAiHint || 'profile picture'} />
+              {displayAvatarSrc ? (
+                <AvatarImage src={displayAvatarSrc} alt={employee.name} asChild>
+                  <Image src={displayAvatarSrc} alt={employee.name} width={128} height={128} data-ai-hint={employee.dataAiHint || 'profile picture'} />
                 </AvatarImage>
               ) : null}
               <AvatarFallback>

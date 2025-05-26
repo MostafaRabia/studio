@@ -7,7 +7,8 @@ import Image from 'next/image';
 export interface Employee {
   id: string;
   name: string;
-  avatarUrl?: string;
+  avatarUrl?: string; // For initial placeholder images
+  avatarDataUrl?: string; // For user-uploaded images (data URI)
   department: string;
   jobTitle: string;
   email: string;
@@ -49,7 +50,7 @@ export const employees: Employee[] = [
   {
     id: '1',
     name: 'Alice Wonderland',
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'woman portrait',
     department: 'Engineering',
     jobTitle: 'Software Engineer',
@@ -65,7 +66,7 @@ export const employees: Employee[] = [
   {
     id: '2',
     name: 'Bob The Builder',
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'man portrait',
     department: 'Product',
     jobTitle: 'Product Manager',
@@ -77,7 +78,7 @@ export const employees: Employee[] = [
   {
     id: '3',
     name: 'Carol Danvers',
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'woman smiling',
     department: 'Marketing',
     jobTitle: 'Marketing Lead',
@@ -88,7 +89,7 @@ export const employees: Employee[] = [
   {
     id: '4',
     name: 'David Copperfield',
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'man professional',
     department: 'Sales',
     jobTitle: 'Sales Executive',
@@ -99,7 +100,7 @@ export const employees: Employee[] = [
     {
     id: '5',
     name: 'Eve Harrington',
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'woman face',
     department: 'Human Resources',
     jobTitle: 'HR Specialist',
@@ -110,7 +111,7 @@ export const employees: Employee[] = [
   {
     id: '6',
     name: 'Frank Castle',
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'man serious',
     department: 'Operations',
     jobTitle: 'Operations Manager',

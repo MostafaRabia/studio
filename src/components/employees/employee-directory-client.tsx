@@ -16,13 +16,15 @@ interface EmployeeCardProps {
 }
 
 function EmployeeCard({ employee }: EmployeeCardProps) {
+  const displayAvatarSrc = employee.avatarDataUrl || employee.avatarUrl;
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center space-x-4 pb-4">
         <Avatar className="h-16 w-16">
-          {employee.avatarUrl ? (
-            <AvatarImage src={employee.avatarUrl} alt={employee.name} asChild>
-              <Image src={employee.avatarUrl} alt={employee.name} width={64} height={64} data-ai-hint={employee.dataAiHint || 'profile picture'} />
+          {displayAvatarSrc ? (
+            <AvatarImage src={displayAvatarSrc} alt={employee.name} asChild>
+              <Image src={displayAvatarSrc} alt={employee.name} width={64} height={64} data-ai-hint={employee.dataAiHint || 'profile picture'} />
             </AvatarImage>
           ) : null}
           <AvatarFallback>

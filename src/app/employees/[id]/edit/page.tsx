@@ -6,7 +6,8 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation'; 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import Image from 'next/image';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,15 +26,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserCog, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, ArrowLeft } from "lucide-react";
+import { CalendarIcon, Save, UserCog, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, ArrowLeft, UploadCloud, UserCircle } from "lucide-react";
 import { employees as existingEmployeesForSelection } from '@/lib/placeholder-data'; 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useEmployees } from "@/contexts/employee-context";
 import { useToast } from "@/hooks/use-toast";
-import type { NewEmployeeFormValues } from '@/app/employees/new/page'; // Reusing the type
+import type { NewEmployeeFormValues } from '@/app/employees/new/page'; 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Reusing the schema from new employee page, can be moved to a shared location later
 const employeeFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   position: z.string().min(2, { message: "Position must be at least 2 characters." }).max(100),
@@ -48,8 +49,9 @@ const employeeFormSchema = z.object({
   directReports: z.array(z.string()).optional().default([]),
   hiringDate: z.date({
     required_error: "Hiring date is required.",
-  }).optional(), // Optional for existing employees if not set
+  }).optional(), 
   hiredBy: z.string().max(100).optional(),
+  avatarDataUrl: z.string().optional(),
 });
 
 
@@ -59,12 +61,13 @@ export default function EditEmployeePage() {
   const { id: employeeId } = params;
   const { employees, updateEmployee } = useEmployees();
   const { toast } = useToast();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const employeeToEdit = employees.find(emp => emp.id === employeeId);
 
   const form = useForm<NewEmployeeFormValues>({
     resolver: zodResolver(employeeFormSchema),
-    defaultValues: { // Initialize all fields to ensure they are controlled
+    defaultValues: { 
       name: "",
       position: "",
       department: "",
@@ -76,8 +79,9 @@ export default function EditEmployeePage() {
       fax: "",
       reportsTo: [],
       directReports: [],
-      hiringDate: undefined, // Calendar component handles undefined
+      hiringDate: undefined, 
       hiredBy: "",
+      avatarDataUrl: "",
     },
   });
 
@@ -97,9 +101,37 @@ export default function EditEmployeePage() {
         directReports: employeeToEdit.directReports || [],
         hiringDate: employeeToEdit.hiringDate ? new Date(employeeToEdit.hiringDate) : undefined,
         hiredBy: employeeToEdit.hiredBy || "",
+        avatarDataUrl: employeeToEdit.avatarDataUrl || "",
       });
+      if (employeeToEdit.avatarDataUrl) {
+        setImagePreview(employeeToEdit.avatarDataUrl);
+      } else if (employeeToEdit.avatarUrl) {
+        // If there's a placeholder URL and no data URL, you might want to preview it too,
+        // or decide if only uploaded images are previewed in edit mode.
+        // For simplicity, let's stick to previewing avatarDataUrl or new uploads.
+        // setImagePreview(employeeToEdit.avatarUrl); 
+      }
     }
   }, [employeeToEdit, form]);
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUri = reader.result as string;
+        setImagePreview(dataUri);
+        form.setValue('avatarDataUrl', dataUri, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Optionally, clear preview if file is deselected, or set to existing one
+      // For now, if a file is "cleared" it means no change to underlying avatarDataUrl unless explicitly removed.
+      // To remove an image, one might need a "Remove Image" button.
+      // Let's assume for now, selecting a new file replaces, deselecting does nothing to the stored value.
+    }
+  };
+
 
   const onSubmit: SubmitHandler<NewEmployeeFormValues> = (data) => {
     if (!employeeId || typeof employeeId !== 'string') {
@@ -161,6 +193,38 @@ export default function EditEmployeePage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+              <FormField
+                control={form.control}
+                name="avatarDataUrl"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col items-center">
+                    <FormLabel>Profile Photo</FormLabel>
+                    <Avatar className="h-32 w-32 mb-2">
+                      {imagePreview ? (
+                        <AvatarImage src={imagePreview} alt="Profile Preview" />
+                      ) : employeeToEdit.avatarUrl ? (
+                        <AvatarImage src={employeeToEdit.avatarUrl} alt={employeeToEdit.name} />
+                      ) : (
+                        <AvatarFallback>
+                          <UserCircle className="h-20 w-20 text-muted-foreground" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <FormControl>
+                      <Input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange}
+                        className="max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                      />
+                    </FormControl>
+                    <FormDescription>Upload a new square image to change it.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="name"

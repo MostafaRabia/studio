@@ -6,7 +6,8 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; 
-import React from "react";
+import React, { useState } from "react";
+import Image from 'next/image';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,12 +26,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase } from "lucide-react";
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, UploadCloud, UserCircle } from "lucide-react";
 import { employees as existingEmployeesForSelection } from '@/lib/placeholder-data'; 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useEmployees } from "@/contexts/employee-context";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 const newEmployeeFormSchema = z.object({
@@ -49,6 +51,7 @@ const newEmployeeFormSchema = z.object({
     required_error: "Hiring date is required.",
   }),
   hiredBy: z.string().max(100).optional(),
+  avatarDataUrl: z.string().optional(), // For storing image as data URI
 });
 
 export type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
@@ -57,6 +60,7 @@ export default function NewEmployeePage() {
   const router = useRouter();
   const { addEmployee } = useEmployees();
   const { toast } = useToast();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const form = useForm<NewEmployeeFormValues>({
     resolver: zodResolver(newEmployeeFormSchema),
@@ -73,8 +77,25 @@ export default function NewEmployeePage() {
       reportsTo: [],
       directReports: [],
       hiredBy: "",
+      avatarDataUrl: "",
     },
   });
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUri = reader.result as string;
+        setImagePreview(dataUri);
+        form.setValue('avatarDataUrl', dataUri, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+      form.setValue('avatarDataUrl', '', { shouldValidate: true });
+    }
+  };
 
   const onSubmit: SubmitHandler<NewEmployeeFormValues> = (data) => {
     console.log("New Employee Data to be added:", data);
@@ -116,6 +137,36 @@ export default function NewEmployeePage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              
+              <FormField
+                control={form.control}
+                name="avatarDataUrl"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col items-center">
+                    <FormLabel>Profile Photo</FormLabel>
+                    <Avatar className="h-32 w-32 mb-2">
+                      {imagePreview ? (
+                        <AvatarImage src={imagePreview} alt="Profile Preview" />
+                      ) : (
+                        <AvatarFallback>
+                          <UserCircle className="h-20 w-20 text-muted-foreground" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <FormControl>
+                       <Input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange}
+                        className="max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                      />
+                    </FormControl>
+                    <FormDescription>Upload a square image for best results.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="name"
