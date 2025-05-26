@@ -9,12 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { 
   Mail, Phone, Briefcase, Building, UserCircle, ArrowLeft, Fingerprint, 
-  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit
+  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import type { Attachment } from '@/lib/placeholder-data';
 
 interface DetailItemProps {
   icon: React.ElementType;
@@ -28,21 +29,39 @@ function DetailItem({ icon: Icon, label, value, isLink, href }: DetailItemProps)
   if (!value && typeof value !== 'number' && typeof value !== 'boolean') return null;
 
   const content = isLink && href ? (
-    <a href={href} className="hover:text-primary hover:underline transition-colors">
+    <a href={href} className="hover:text-primary hover:underline transition-colors break-all">
       {value}
     </a>
   ) : (
-    value
+    <span className="break-all">{value}</span>
   );
 
   return (
     <div className="flex items-start gap-3 py-3">
-      <Icon className="h-5 w-5 text-primary mt-0.5" />
+      <Icon className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
       <div>
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="text-base">{content}</p>
       </div>
     </div>
+  );
+}
+
+function AttachmentItem({ attachment }: { attachment: Attachment }) {
+  return (
+    <li className="flex items-center justify-between py-2 border-b last:border-b-0">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-muted-foreground" />
+        <span className="text-sm font-medium">{attachment.name}</span>
+        <Badge variant="outline" className="text-xs">{(attachment.size / 1024).toFixed(1)} KB</Badge>
+      </div>
+      <a href={attachment.dataUrl} download={attachment.name}>
+        <Button variant="outline" size="sm">
+          <Download className="mr-2 h-4 w-4" />
+          Download
+        </Button>
+      </a>
+    </li>
   );
 }
 
@@ -148,6 +167,24 @@ export default function EmployeeProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {employee.attachments && employee.attachments.length > 0 && (
+          <Card className="md:col-span-3 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Paperclip className="mr-2 h-5 w-5" />
+                Attachments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {employee.attachments.map((att) => (
+                  <AttachmentItem key={att.id} attachment={att} />
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );

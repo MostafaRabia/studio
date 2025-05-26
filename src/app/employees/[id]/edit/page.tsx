@@ -26,8 +26,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserCog, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, ArrowLeft, UploadCloud, UserCircle } from "lucide-react";
+import { CalendarIcon, Save, UserCog, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, ArrowLeft, UploadCloud, UserCircle, Paperclip, FileText, Trash2 } from "lucide-react";
 import { employees as existingEmployeesForSelection } from '@/lib/placeholder-data'; 
+import type { Attachment } from '@/lib/placeholder-data';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useEmployees } from "@/contexts/employee-context";
@@ -35,24 +36,11 @@ import { useToast } from "@/hooks/use-toast";
 import type { NewEmployeeFormValues } from '@/app/employees/new/page'; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const employeeFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
-  position: z.string().min(2, { message: "Position must be at least 2 characters." }).max(100),
-  department: z.string().min(2, { message: "Department is required." }).max(100),
-  idNumber: z.string().min(1, { message: "ID number is required." }).max(50),
-  email: z.string().email({ message: "Invalid email address." }).min(5).max(100),
-  officeLocation: z.string().max(100).optional(),
-  mobile: z.string().optional(),
-  phone: z.string().optional(),
-  fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
-  reportsTo: z.array(z.string()).optional().default([]), 
-  directReports: z.array(z.string()).optional().default([]),
-  hiringDate: z.date({
-    required_error: "Hiring date is required.",
-  }).optional(), 
-  hiredBy: z.string().max(100).optional(),
-  avatarDataUrl: z.string().optional(),
-});
+// Schema is imported via NewEmployeeFormValues type, ensure it includes attachments
+// const employeeFormSchema is implicitly defined by NewEmployeeFormValues
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
 
 export default function EditEmployeePage() {
@@ -66,7 +54,7 @@ export default function EditEmployeePage() {
   const employeeToEdit = employees.find(emp => emp.id === employeeId);
 
   const form = useForm<NewEmployeeFormValues>({
-    resolver: zodResolver(employeeFormSchema),
+    // resolver: zodResolver(employeeFormSchema) // This now comes from NewEmployeeFormValues
     defaultValues: { 
       name: "",
       position: "",
@@ -82,6 +70,7 @@ export default function EditEmployeePage() {
       hiringDate: undefined, 
       hiredBy: "",
       avatarDataUrl: "",
+      attachments: [],
     },
   });
 
@@ -102,19 +91,15 @@ export default function EditEmployeePage() {
         hiringDate: employeeToEdit.hiringDate ? new Date(employeeToEdit.hiringDate) : undefined,
         hiredBy: employeeToEdit.hiredBy || "",
         avatarDataUrl: employeeToEdit.avatarDataUrl || "",
+        attachments: employeeToEdit.attachments || [],
       });
       if (employeeToEdit.avatarDataUrl) {
         setImagePreview(employeeToEdit.avatarDataUrl);
-      } else if (employeeToEdit.avatarUrl) {
-        // If there's a placeholder URL and no data URL, you might want to preview it too,
-        // or decide if only uploaded images are previewed in edit mode.
-        // For simplicity, let's stick to previewing avatarDataUrl or new uploads.
-        // setImagePreview(employeeToEdit.avatarUrl); 
       }
     }
   }, [employeeToEdit, form]);
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -124,12 +109,57 @@ export default function EditEmployeePage() {
         form.setValue('avatarDataUrl', dataUri, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
-    } else {
-      // Optionally, clear preview if file is deselected, or set to existing one
-      // For now, if a file is "cleared" it means no change to underlying avatarDataUrl unless explicitly removed.
-      // To remove an image, one might need a "Remove Image" button.
-      // Let's assume for now, selecting a new file replaces, deselecting does nothing to the stored value.
     }
+  };
+
+  const handleAttachmentChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newAttachments: Attachment[] = [...(form.getValues('attachments') || [])];
+      const filePromises = Array.from(files).map(file => {
+        return new Promise<Attachment | null>((resolve, reject) => {
+          if (file.size > MAX_FILE_SIZE) {
+            toast({ title: "File too large", description: `${file.name} exceeds 5MB limit.`, variant: "destructive" });
+            resolve(null);
+            return;
+          }
+          // if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+          //   toast({ title: "Invalid file type", description: `${file.name} is not an allowed file type.`, variant: "destructive" });
+          //   resolve(null);
+          //   return;
+          // }
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve({
+              id: Date.now().toString() + Math.random().toString(36).substring(2), // simple unique id
+              name: file.name,
+              type: file.type,
+              dataUrl: reader.result as string,
+              size: file.size,
+            });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      try {
+        const results = await Promise.all(filePromises);
+        results.forEach(att => {
+          if (att) newAttachments.push(att);
+        });
+        form.setValue('attachments', newAttachments, { shouldValidate: true });
+      } catch (error) {
+        console.error("Error reading attachments:", error);
+        toast({ title: "Error reading files", description: "Could not process all selected files.", variant: "destructive" });
+      }
+    }
+  };
+
+  const removeAttachment = (attachmentId: string) => {
+    const currentAttachments = form.getValues('attachments') || [];
+    form.setValue('attachments', currentAttachments.filter(att => att.id !== attachmentId), { shouldValidate: true });
   };
 
 
@@ -160,6 +190,9 @@ export default function EditEmployeePage() {
       .map(id => existingEmployeesForSelection.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
   }, [form.watch('directReports')]);
+
+  const currentAttachments = form.watch('attachments') || [];
+
 
   if (!employeeToEdit) {
     return (
@@ -215,7 +248,7 @@ export default function EditEmployeePage() {
                       <Input 
                         type="file" 
                         accept="image/*" 
-                        onChange={handleFileChange}
+                        onChange={handleAvatarFileChange}
                         className="max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                       />
                     </FormControl>
@@ -528,6 +561,52 @@ export default function EditEmployeePage() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="attachments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Paperclip className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Attachments
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="file" 
+                        multiple 
+                        onChange={handleAttachmentChange}
+                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Attach relevant documents (PDF, Word, Images accepted. Max 5MB per file).
+                    </FormDescription>
+                    {currentAttachments.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm font-medium">Current Attachments:</p>
+                        <ul className="list-none space-y-2">
+                          {currentAttachments.map((att) => (
+                            <li key={att.id} className="flex items-center justify-between p-2 border rounded-md bg-secondary/50">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm truncate max-w-xs" title={att.name}>{att.name}</span>
+                                <Badge variant="outline" className="text-xs">{(att.size / 1024).toFixed(1)} KB</Badge>
+                              </div>
+                              <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(att.id)} className="h-6 w-6">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Remove {att.name}</span>
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
 
               <div className="flex justify-end space-x-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => router.push(`/employees/${employeeId}`)}>

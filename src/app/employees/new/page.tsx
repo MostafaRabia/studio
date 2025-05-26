@@ -26,14 +26,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, UploadCloud, UserCircle } from "lucide-react";
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, UploadCloud, UserCircle, Paperclip, FileText } from "lucide-react";
 import { employees as existingEmployeesForSelection } from '@/lib/placeholder-data'; 
+import type { Attachment } from '@/lib/placeholder-data';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useEmployees } from "@/contexts/employee-context";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+
+const attachmentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  dataUrl: z.string(),
+  size: z.number(),
+});
 
 const newEmployeeFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
@@ -52,6 +61,7 @@ const newEmployeeFormSchema = z.object({
   }),
   hiredBy: z.string().max(100).optional(),
   avatarDataUrl: z.string().optional(), // For storing image as data URI
+  attachments: z.array(attachmentSchema).optional().default([]),
 });
 
 export type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
@@ -78,6 +88,7 @@ export default function NewEmployeePage() {
       directReports: [],
       hiredBy: "",
       avatarDataUrl: "",
+      attachments: [],
     },
   });
 
@@ -470,6 +481,8 @@ export default function NewEmployeePage() {
                   )}
                 />
               </div>
+
+              {/* Attachments field could be added here in the future if needed */}
 
               <div className="flex justify-end space-x-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => router.push('/employees')}>

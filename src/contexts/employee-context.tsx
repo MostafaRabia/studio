@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Employee } from '@/lib/placeholder-data';
+import type { Employee, Attachment } from '@/lib/placeholder-data';
 import { employees as initialEmployeesData } from '@/lib/placeholder-data';
 import type { NewEmployeeFormValues } from '@/app/employees/new/page'; 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -36,6 +36,7 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
       directReports: employeeData.directReports,
       hiringDate: employeeData.hiringDate ? new Date(employeeData.hiringDate).toISOString() : undefined,
       hiredBy: employeeData.hiredBy,
+      attachments: employeeData.attachments || [],
     };
     setEmployees((prevEmployees) => [newEmployee, ...prevEmployees]);
   };
@@ -51,7 +52,7 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
               department: employeeData.department || emp.department,
               email: employeeData.email,
               phone: employeeData.phone || emp.phone,
-              avatarDataUrl: employeeData.avatarDataUrl || emp.avatarDataUrl, // Preserve if not changed
+              avatarDataUrl: employeeData.avatarDataUrl || emp.avatarDataUrl, 
               dataAiHint: employeeData.avatarDataUrl ? 'custom profile' : emp.dataAiHint,
               idNumber: employeeData.idNumber,
               officeLocation: employeeData.officeLocation,
@@ -61,6 +62,7 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
               directReports: employeeData.directReports,
               hiringDate: employeeData.hiringDate ? new Date(employeeData.hiringDate).toISOString() : emp.hiringDate,
               hiredBy: employeeData.hiredBy,
+              attachments: employeeData.attachments || emp.attachments || [],
             }
           : emp
       )

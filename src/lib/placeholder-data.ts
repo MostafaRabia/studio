@@ -3,6 +3,13 @@ import type { LucideIcon } from 'lucide-react';
 import { FileText, ExternalLink, ShieldCheck, Handshake } from 'lucide-react';
 import Image from 'next/image';
 
+export interface Attachment {
+  id: string; // Unique ID for the attachment
+  name: string;
+  type: string; // MIME type
+  dataUrl: string;
+  size: number; // size in bytes
+}
 
 export interface Employee {
   id: string;
@@ -24,6 +31,7 @@ export interface Employee {
   directReports?: string[]; // Array of employee IDs
   hiringDate?: string; // Store as ISO string for consistency
   hiredBy?: string;
+  attachments?: Attachment[];
 }
 
 export interface Announcement {
@@ -62,6 +70,7 @@ export const employees: Employee[] = [
     hiringDate: new Date('2022-08-15').toISOString(),
     hiredBy: 'Bob The Builder',
     reportsTo: ['2'], // Bob The Builder's ID
+    attachments: [],
   },
   {
     id: '2',
@@ -74,6 +83,7 @@ export const employees: Employee[] = [
     phone: '555-0102',
     idNumber: 'EMP002',
     directReports: ['1'], // Alice Wonderland's ID
+    attachments: [],
   },
   {
     id: '3',
@@ -85,6 +95,7 @@ export const employees: Employee[] = [
     email: 'carol.d@example.com',
     phone: '555-0103',
     idNumber: 'EMP003',
+    attachments: [],
   },
   {
     id: '4',
@@ -96,6 +107,7 @@ export const employees: Employee[] = [
     email: 'david.c@example.com',
     phone: '555-0104',
     idNumber: 'EMP004',
+    attachments: [],
   },
     {
     id: '5',
@@ -107,6 +119,7 @@ export const employees: Employee[] = [
     email: 'eve.h@example.com',
     phone: '555-0105',
     idNumber: 'EMP005',
+    attachments: [],
   },
   {
     id: '6',
@@ -118,6 +131,7 @@ export const employees: Employee[] = [
     email: 'frank.c@example.com',
     phone: '555-0106',
     idNumber: 'EMP006',
+    attachments: [],
   },
 ];
 
