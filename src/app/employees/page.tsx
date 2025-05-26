@@ -2,10 +2,10 @@
 import { PageHeader } from '@/components/page-header';
 import { EmployeeDirectoryClient } from '@/components/employees/employee-directory-client';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Users } from 'lucide-react'; // Changed GitFork to Users for hierarchy
 import Link from 'next/link';
-import { InlineEmployeeHierarchy } from '@/components/employees/inline-employee-hierarchy';
-import { Separator } from '@/components/ui/separator';
+// import { InlineEmployeeHierarchy } from '@/components/employees/inline-employee-hierarchy'; // Removed
+// import { Separator } from '@/components/ui/separator'; // Removed
 
 export default function EmployeeDirectoryPage() {
   return (
@@ -15,7 +15,12 @@ export default function EmployeeDirectoryPage() {
         description="Find and connect with your colleagues."
         actions={
           <div className="flex gap-2">
-            {/* Removed Employee Hierarchy button as it's now inline */}
+            <Link href="/employees/hierarchy" passHref>
+              <Button variant="outline">
+                <Users className="mr-2 h-4 w-4" /> 
+                Employee Hierarchy
+              </Button>
+            </Link>
             <Link href="/employees/new" passHref>
               <Button>
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -28,9 +33,9 @@ export default function EmployeeDirectoryPage() {
       {/* EmployeeDirectoryClient now gets employees from context */}
       <EmployeeDirectoryClient /> 
 
-      <Separator className="my-8" />
+      {/* <Separator className="my-8" /> Removed Separator */}
 
-      <InlineEmployeeHierarchy />
+      {/* <InlineEmployeeHierarchy /> Removed InlineEmployeeHierarchy */}
     </>
   );
 }

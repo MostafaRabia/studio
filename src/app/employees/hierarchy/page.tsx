@@ -1,13 +1,17 @@
 
 "use client";
 
-import { PageHeader } from '@/components/page-header'; // Not strictly needed for title, but good for consistency if we add description
+import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users } from 'lucide-react';
+import { Users }
+from 'lucide-react';
 import { useEmployees } from '@/contexts/employee-context';
 import { EmployeeHierarchyNode } from '@/components/employees/employee-hierarchy-node';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
-export function InlineEmployeeHierarchy() {
+export default function EmployeeHierarchyPage() {
   const { employees } = useEmployees();
 
   const employeeIds = new Set(employees.map(e => e.id));
@@ -20,12 +24,21 @@ export function InlineEmployeeHierarchy() {
   });
 
   return (
-    <section aria-labelledby="hierarchy-title">
-      <h2 id="hierarchy-title" className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-4">
-        Organizational Chart
-      </h2>
+    <>
+      <PageHeader
+        title="Employee Hierarchy Chart"
+        description="Visual representation of the reporting structure."
+        actions={
+            <Link href="/employees" passHref>
+              <Button variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Directory
+              </Button>
+            </Link>
+        }
+      />
       <Card className="shadow-lg">
-        <CardHeader className="hidden"> {/* Header content moved to h2 above for semantic structure */}
+        <CardHeader className="hidden"> {/* Header content moved to PageHeader */}
           <CardTitle className="flex items-center">
             <Users className="mr-2 h-5 w-5 text-primary" />
             Organizational Chart
@@ -56,6 +69,6 @@ export function InlineEmployeeHierarchy() {
           )}
         </CardContent>
       </Card>
-    </section>
+    </>
   );
 }
