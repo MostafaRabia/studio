@@ -9,13 +9,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { 
   Mail, Phone, Briefcase, Building, UserCircle, ArrowLeft, Fingerprint, 
-  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download
+  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download, Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import type { Attachment } from '@/lib/placeholder-data';
+import React, { useState } from 'react';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DetailItemProps {
   icon: React.ElementType;
@@ -65,6 +70,22 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   );
 }
 
+const allConfigurableFields = [
+  { key: 'idNumber', label: 'ID Number', icon: Fingerprint },
+  { key: 'email', label: 'Email Address', icon: Mail },
+  { key: 'phone', label: 'Office Phone', icon: Phone },
+  { key: 'mobile', label: 'Mobile Number', icon: Smartphone },
+  { key: 'fax', label: 'Fax Number', icon: Printer },
+  { key: 'officeLocation', label: 'Office Location', icon: Building },
+  { key: 'hiringDate', label: 'Hiring Date', icon: CalendarDays },
+  { key: 'hiredBy', label: 'Hired By', icon: UserCog },
+  { key: 'reportsTo', label: 'Reports To', icon: Users },
+  { key: 'directReports', label: 'Direct Reports', icon: UserCheck },
+  { key: 'attachments', label: 'Attachments Section', icon: Paperclip },
+] as const;
+
+type FieldKey = typeof allConfigurableFields[number]['key'];
+
 
 export default function EmployeeProfilePage() {
   const params = useParams();
@@ -73,6 +94,21 @@ export default function EmployeeProfilePage() {
   const { employees } = useEmployees();
 
   const employee = employees.find(emp => emp.id === id);
+
+  const [fieldVisibility, setFieldVisibility] = useState<Record<FieldKey, boolean>>(() => {
+    const initialState: Partial<Record<FieldKey, boolean>> = {};
+    allConfigurableFields.forEach(field => {
+      initialState[field.key] = true; // Default all to visible
+    });
+    return initialState as Record<FieldKey, boolean>;
+  });
+
+  const toggleFieldVisibility = (fieldKey: FieldKey) => {
+    setFieldVisibility(prev => ({
+      ...prev,
+      [fieldKey]: !prev[fieldKey],
+    }));
+  };
 
   if (!employee) {
     return (
@@ -108,6 +144,43 @@ export default function EmployeeProfilePage() {
         description={employee.jobTitle}
         actions={
           <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Config
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Configure Visible Fields</DialogTitle>
+                  <DialogDescription>
+                    Select which employee profile fields you want to display. Changes apply instantly.
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[60vh] pr-6">
+                  <div className="grid gap-4 py-4">
+                    {allConfigurableFields.map(field => (
+                      <div key={field.key} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`visibility-${field.key}`}
+                          checked={fieldVisibility[field.key]}
+                          onCheckedChange={() => toggleFieldVisibility(field.key)}
+                        />
+                        <Label htmlFor={`visibility-${field.key}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          {field.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button">Done</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <Link href={`/employees/${id}/edit`} passHref>
               <Button variant="outline">
                 <Edit className="mr-2 h-4 w-4" />
@@ -149,26 +222,26 @@ export default function EmployeeProfilePage() {
             <CardTitle>Employee Details</CardTitle>
           </CardHeader>
           <CardContent className="divide-y divide-border">
-            <DetailItem icon={Fingerprint} label="ID Number" value={employee.idNumber} />
-            <DetailItem icon={Mail} label="Email" value={employee.email} isLink href={`mailto:${employee.email}`} />
-            <DetailItem icon={Phone} label="Office Phone" value={employee.phone} />
-            <DetailItem icon={Smartphone} label="Mobile Number" value={employee.mobile} />
-            <DetailItem icon={Printer} label="Fax Number" value={employee.fax} />
-            <DetailItem icon={Building} label="Office Location" value={employee.officeLocation} />
-            {employee.hiringDate && (
+            {fieldVisibility.idNumber && <DetailItem icon={Fingerprint} label="ID Number" value={employee.idNumber} />}
+            {fieldVisibility.email && <DetailItem icon={Mail} label="Email" value={employee.email} isLink href={`mailto:${employee.email}`} />}
+            {fieldVisibility.phone && <DetailItem icon={Phone} label="Office Phone" value={employee.phone} />}
+            {fieldVisibility.mobile && <DetailItem icon={Smartphone} label="Mobile Number" value={employee.mobile} />}
+            {fieldVisibility.fax && <DetailItem icon={Printer} label="Fax Number" value={employee.fax} />}
+            {fieldVisibility.officeLocation && <DetailItem icon={Building} label="Office Location" value={employee.officeLocation} />}
+            {fieldVisibility.hiringDate && employee.hiringDate && (
               <DetailItem icon={CalendarDays} label="Hiring Date" value={format(new Date(employee.hiringDate), 'PPP')} />
             )}
-            <DetailItem icon={UserCog} label="Hired By" value={employee.hiredBy} />
-            {reportsToNames && (
+            {fieldVisibility.hiredBy && <DetailItem icon={UserCog} label="Hired By" value={employee.hiredBy} />}
+            {fieldVisibility.reportsTo && reportsToNames && (
                <DetailItem icon={Users} label="Reports To" value={reportsToNames} />
             )}
-            {directReportsNames && (
+            {fieldVisibility.directReports && directReportsNames && (
                <DetailItem icon={UserCheck} label="Direct Reports" value={directReportsNames} />
             )}
           </CardContent>
         </Card>
 
-        {employee.attachments && employee.attachments.length > 0 && (
+        {fieldVisibility.attachments && employee.attachments && employee.attachments.length > 0 && (
           <Card className="md:col-span-3 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -189,3 +262,4 @@ export default function EmployeeProfilePage() {
     </>
   );
 }
+
