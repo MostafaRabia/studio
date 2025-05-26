@@ -8,19 +8,16 @@ import { ArrowLeft, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEmployees } from '@/contexts/employee-context';
 import { EmployeeHierarchyNode } from '@/components/employees/employee-hierarchy-node';
-import type { Employee } from '@/lib/placeholder-data';
+// Removed type Employee import as it's not directly used here anymore
 
 export default function EmployeeHierarchyPage() {
   const { employees } = useEmployees();
 
-  // Determine root nodes: employees who don't report to anyone in the current list,
-  // or whose 'reportsTo' is empty/undefined.
   const employeeIds = new Set(employees.map(e => e.id));
   const rootEmployees = employees.filter(emp => {
     if (!emp.reportsTo || emp.reportsTo.length === 0) {
-      return true; // No manager listed
+      return true;
     }
-    // Check if any listed manager is actually in the current employee dataset
     return !emp.reportsTo.some(managerId => employeeIds.has(managerId));
   });
 
@@ -45,22 +42,21 @@ export default function EmployeeHierarchyPage() {
             Hierarchy Chart
           </CardTitle>
           <CardDescription>
-            Organizational structure based on reporting lines.
+            Organizational structure based on reporting lines. Scroll horizontally if needed.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 overflow-x-auto"> {/* Added overflow-x-auto for horizontal scrolling */}
           {employees.length === 0 ? (
             <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
               <p className="text-muted-foreground">No employees in the directory to display a hierarchy.</p>
             </div>
           ) : rootEmployees.length > 0 ? (
-            <div className="space-y-4"> {/* Adjusted spacing if needed */}
+             <div className="flex flex-row justify-center items-start space-x-4 min-w-max"> {/* Horizontal layout for root nodes, min-w-max ensures content defines width */}
               {rootEmployees.map(employee => (
                 <EmployeeHierarchyNode
                   key={employee.id}
                   employee={employee}
                   allEmployees={employees}
-                  // Removed level={0} prop
                 />
               ))}
             </div>
