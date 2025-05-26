@@ -1,16 +1,13 @@
 
 "use client";
 
-import { PageHeader } from '@/components/page-header';
+import { PageHeader } from '@/components/page-header'; // Not strictly needed for title, but good for consistency if we add description
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users } from 'lucide-react';
-import Link from 'next/link';
+import { Users } from 'lucide-react';
 import { useEmployees } from '@/contexts/employee-context';
 import { EmployeeHierarchyNode } from '@/components/employees/employee-hierarchy-node';
-// Removed type Employee import as it's not directly used here anymore
 
-export default function EmployeeHierarchyPage() {
+export function InlineEmployeeHierarchy() {
   const { employees } = useEmployees();
 
   const employeeIds = new Set(employees.map(e => e.id));
@@ -18,40 +15,32 @@ export default function EmployeeHierarchyPage() {
     if (!emp.reportsTo || emp.reportsTo.length === 0) {
       return true;
     }
+    // Check if any of the managers listed in reportsTo actually exist in the employee list
     return !emp.reportsTo.some(managerId => employeeIds.has(managerId));
   });
 
   return (
-    <>
-      <PageHeader
-        title="Employee Hierarchy Chart"
-        description="Visualize the reporting structure of the organization."
-        actions={
-            <Link href="/employees" passHref>
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Directory
-              </Button>
-            </Link>
-        }
-      />
+    <section aria-labelledby="hierarchy-title">
+      <h2 id="hierarchy-title" className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-4">
+        Organizational Chart
+      </h2>
       <Card className="shadow-lg">
-        <CardHeader>
+        <CardHeader className="hidden"> {/* Header content moved to h2 above for semantic structure */}
           <CardTitle className="flex items-center">
             <Users className="mr-2 h-5 w-5 text-primary" />
-            Hierarchy Chart
+            Organizational Chart
           </CardTitle>
           <CardDescription>
-            Organizational structure based on reporting lines. Scroll horizontally if needed.
+            Visual representation of the reporting structure.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 overflow-x-auto"> {/* Added overflow-x-auto for horizontal scrolling */}
+        <CardContent className="p-4 overflow-x-auto">
           {employees.length === 0 ? (
             <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
               <p className="text-muted-foreground">No employees in the directory to display a hierarchy.</p>
             </div>
           ) : rootEmployees.length > 0 ? (
-             <div className="flex flex-row justify-center items-start space-x-4 min-w-max"> {/* Horizontal layout for root nodes, min-w-max ensures content defines width */}
+             <div className="flex flex-row justify-center items-start space-x-4 min-w-max">
               {rootEmployees.map(employee => (
                 <EmployeeHierarchyNode
                   key={employee.id}
@@ -67,6 +56,6 @@ export default function EmployeeHierarchyPage() {
           )}
         </CardContent>
       </Card>
-    </>
+    </section>
   );
 }
