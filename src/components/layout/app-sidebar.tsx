@@ -16,12 +16,12 @@ import {
 import { AppLogo } from "./app-logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork } from "lucide-react"; // Added GitFork back
+import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork, Bell } from "lucide-react"; // Added Bell
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/employees", label: "Employees", icon: Users },
-  { href: "/employees/hierarchy", label: "Hierarchy", icon: GitFork }, // Restored Hierarchy link
+  { href: "/employees/hierarchy", label: "Hierarchy", icon: GitFork },
   { href: "/announcements", label: "Announcements", icon: Megaphone },
   { href: "/faq", label: "AI FAQ", icon: HelpCircle },
   { href: "/resources", label: "Resources", icon: Library },
@@ -59,8 +59,13 @@ export function AppSidebar() {
       </SidebarContent>
       <Separator className="my-2" />
       <SidebarFooter className="p-2">
-        {/* Placeholder for future items like Settings or Logout */}
         <SidebarMenu>
+           <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{ children: "Notifications", side: "right", align: "center" }}>
+              <Bell />
+              <span>Notifications</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton tooltip={{ children: "Settings", side: "right", align: "center" }}>
               <Settings />
@@ -78,3 +83,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
