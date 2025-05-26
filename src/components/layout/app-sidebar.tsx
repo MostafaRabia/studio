@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -15,11 +16,12 @@ import {
 import { AppLogo } from "./app-logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork } from "lucide-react";
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/employees", label: "Employees", icon: Users },
+  { href: "/employees/hierarchy", label: "Hierarchy", icon: GitFork },
   { href: "/announcements", label: "Announcements", icon: Megaphone },
   { href: "/faq", label: "AI FAQ", icon: HelpCircle },
   { href: "/resources", label: "Resources", icon: Library },

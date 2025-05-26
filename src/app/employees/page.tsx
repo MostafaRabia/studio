@@ -14,7 +14,7 @@ export default function EmployeeDirectoryPage() {
         description="Find and connect with your colleagues."
         actions={
           <div className="flex gap-2">
-            <Link href="#" passHref>
+            <Link href="/employees/hierarchy" passHref>
               <Button variant="outline">
                 <GitFork className="mr-2 h-4 w-4" />
                 Employee Hierarchy
@@ -34,4 +34,3 @@ export default function EmployeeDirectoryPage() {
     </>
   );
 }
-
