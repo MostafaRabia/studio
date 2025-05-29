@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const CURRENT_MANAGER_ID = '2'; // Assuming Bob The Builder (ID '2') is the manager
 
 interface TeamMemberVacationBalance extends Employee {
+  totalEntitlementDays: number;
   availableDays: number;
   consumedDays: number;
 }
@@ -37,6 +38,7 @@ export default function MyTeamBalancePage() {
     (member) => ({
       ...member,
       // Placeholder data for vacation days
+      totalEntitlementDays: 25, // Placeholder
       availableDays: Math.floor(Math.random() * 20) + 5, // Random between 5 and 24
       consumedDays: Math.floor(Math.random() * 10),      // Random between 0 and 9
     })
@@ -74,6 +76,7 @@ export default function MyTeamBalancePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead className="text-right">Total Entitlement</TableHead>
                   <TableHead className="text-right">Available Days</TableHead>
                   <TableHead className="text-right">Consumed Days</TableHead>
                 </TableRow>
@@ -82,6 +85,7 @@ export default function MyTeamBalancePage() {
                 {teamMemberBalances.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell className="font-medium">{member.name} ({member.jobTitle})</TableCell>
+                    <TableCell className="text-right">{member.totalEntitlementDays}</TableCell>
                     <TableCell className="text-right">{member.availableDays}</TableCell>
                     <TableCell className="text-right">{member.consumedDays}</TableCell>
                   </TableRow>
