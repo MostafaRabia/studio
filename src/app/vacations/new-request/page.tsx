@@ -156,7 +156,7 @@ export default function NewVacationRequestPage() {
       numberOfDays,
       vacationType: data.vacationType,
       submittingDate,
-      approvedFrom: managerName, // Placeholder, actual approval logic needed
+      approvedFrom: managerName, 
       status: "Pending",
     };
 
@@ -347,7 +347,7 @@ export default function NewVacationRequestPage() {
           </div>
         }
       />
-      <div className="mt-8">
+      <div className="mt-8 p-4 border-2 border-dashed border-blue-500 rounded-md"> {/* Added debug border and padding */}
         <h2 className="text-xl font-semibold mb-4">My Requests</h2>
         {myRequests.length > 0 ? (
           <Table>
@@ -376,9 +376,9 @@ export default function NewVacationRequestPage() {
                     <span
                       className={cn(
                         "px-2 py-1 text-xs font-semibold rounded-full",
-                        request.status === "Approved" && "bg-green-100 text-green-700",
-                        request.status === "Pending" && "bg-yellow-100 text-yellow-700",
-                        request.status === "Rejected" && "bg-red-100 text-red-700"
+                        request.status === "Approved" && "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200",
+                        request.status === "Pending" && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200",
+                        request.status === "Rejected" && "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
                       )}
                     >
                       {request.status}
@@ -399,5 +399,3 @@ export default function NewVacationRequestPage() {
     </>
   );
 }
-
-    
