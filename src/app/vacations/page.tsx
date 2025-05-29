@@ -30,10 +30,12 @@ export default function VacationsPage() {
                 New Vacation Request
               </Button>
             </Link>
-            <Button variant="secondary">
-              <ClipboardCheck className="mr-2 h-4 w-4" />
-              Approval Requests
-            </Button>
+            <Link href="/vacations/approval-requests" passHref>
+              <Button variant="secondary">
+                <ClipboardCheck className="mr-2 h-4 w-4" />
+                Approval Requests
+              </Button>
+            </Link>
           </div>
         }
       />
