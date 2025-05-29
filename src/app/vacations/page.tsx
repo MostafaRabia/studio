@@ -2,6 +2,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Wallet, Users, PlusCircle, ClipboardCheck } from 'lucide-react';
+import Link from 'next/link';
 
 export default function VacationsPage() {
   return (
@@ -11,10 +12,12 @@ export default function VacationsPage() {
         description="Manage and view employee vacation requests and schedules."
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline">
-              <Wallet className="mr-2 h-4 w-4" />
-              My Balance
-            </Button>
+            <Link href="/vacations/my-balance" passHref>
+              <Button variant="outline">
+                <Wallet className="mr-2 h-4 w-4" />
+                My Balance
+              </Button>
+            </Link>
             <Button variant="outline">
               <Users className="mr-2 h-4 w-4" />
               My Team Balance
