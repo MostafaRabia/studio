@@ -37,16 +37,16 @@ export default function MyTeamBalancePage() {
   const teamMemberBalances: TeamMemberVacationBalance[] = teamMembers.map(
     (member) => ({
       ...member,
-      // Placeholder data for vacation days
-      totalEntitlementDays: 25, // Placeholder
-      availableDays: Math.floor(Math.random() * 20) + 5, // Random between 5 and 24
-      consumedDays: Math.floor(Math.random() * 10),      // Random between 0 and 9
+      // Using consistent placeholder values
+      totalEntitlementDays: 25,
+      availableDays: 18,
+      consumedDays: 7,
     })
   );
 
   // Find the manager's name for the PageHeader description
   const manager = employees.find(emp => emp.id === CURRENT_MANAGER_ID);
-  const pageDescription = manager 
+  const pageDescription = manager
     ? `View the vacation balances for ${manager.name}'s team members.`
     : "View the vacation balances for your team members.";
 
