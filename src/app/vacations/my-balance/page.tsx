@@ -2,12 +2,13 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, CalendarDays } from 'lucide-react';
+import { ArrowLeft, CalendarDays, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBalancePage() {
-  // Placeholder value, can be made dynamic later
-  const totalAvailableVacationDays = 25;
+  // Placeholder values, can be made dynamic later
+  const totalEntitlementVacationDays = 25;
+  const myAvailableDays = 18; // New placeholder value
 
   return (
     <>
@@ -27,16 +28,33 @@ export default function MyBalancePage() {
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Available Vacation Days
+              Total Entitlement
             </CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {totalAvailableVacationDays} days
+              {totalEntitlementVacationDays} days
             </div>
             <p className="text-xs text-muted-foreground">
               Current entitlement for this year.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              My Available Days
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {myAvailableDays} days
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Remaining days you can request.
             </p>
           </CardContent>
         </Card>
