@@ -111,7 +111,7 @@ export default function NewVacationRequestPage() {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Start Date</FormLabel>
-                          <Popover open={isStartDatePopoverOpen} onOpenChange={setIsStartDatePopoverOpen}>
+                          <Popover modal={false} open={isStartDatePopoverOpen} onOpenChange={setIsStartDatePopoverOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
@@ -163,7 +163,7 @@ export default function NewVacationRequestPage() {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>End Date</FormLabel>
-                          <Popover open={isEndDatePopoverOpen} onOpenChange={setIsEndDatePopoverOpen}>
+                          <Popover modal={false} open={isEndDatePopoverOpen} onOpenChange={setIsEndDatePopoverOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
