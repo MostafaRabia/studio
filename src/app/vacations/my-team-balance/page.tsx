@@ -1,15 +1,59 @@
 
+"use client";
+
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useEmployees } from '@/contexts/employee-context';
+import type { Employee } from '@/lib/placeholder-data';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Placeholder for the current manager's ID. In a real app, this would come from auth.
+const CURRENT_MANAGER_ID = '2'; // Assuming Bob The Builder (ID '2') is the manager
+
+interface TeamMemberVacationBalance extends Employee {
+  availableDays: number;
+  consumedDays: number;
+}
 
 export default function MyTeamBalancePage() {
+  const { employees } = useEmployees();
+
+  const teamMembers = employees.filter(
+    (emp) => emp.reportsTo?.includes(CURRENT_MANAGER_ID)
+  );
+
+  const teamMemberBalances: TeamMemberVacationBalance[] = teamMembers.map(
+    (member) => ({
+      ...member,
+      // Placeholder data for vacation days
+      availableDays: Math.floor(Math.random() * 20) + 5, // Random between 5 and 24
+      consumedDays: Math.floor(Math.random() * 10),      // Random between 0 and 9
+    })
+  );
+
+  // Find the manager's name for the PageHeader description
+  const manager = employees.find(emp => emp.id === CURRENT_MANAGER_ID);
+  const pageDescription = manager 
+    ? `View the vacation balances for ${manager.name}'s team members.`
+    : "View the vacation balances for your team members.";
+
+
   return (
     <>
       <PageHeader
         title="My Team's Vacation Balance"
-        description="View the vacation balances for your team members."
+        description={pageDescription}
         actions={
           <Link href="/vacations" passHref>
             <Button variant="outline">
@@ -19,11 +63,40 @@ export default function MyTeamBalancePage() {
           </Link>
         }
       />
-      <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
-        <p className="text-muted-foreground text-center">
-          Team balance information will be displayed here.
-        </p>
-      </div>
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Team Vacation Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {teamMemberBalances.length > 0 ? (
+            <Table>
+              <TableCaption>A summary of your team's vacation days.</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead className="text-right">Available Days</TableHead>
+                  <TableHead className="text-right">Consumed Days</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {teamMemberBalances.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium">{member.name} ({member.jobTitle})</TableCell>
+                    <TableCell className="text-right">{member.availableDays}</TableCell>
+                    <TableCell className="text-right">{member.consumedDays}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
+              <p className="text-muted-foreground text-center">
+                { manager ? `${manager.name} does not have any direct reports listed.` : "No team members found to display."}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
