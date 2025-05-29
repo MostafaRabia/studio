@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+import { useEmployees } from '@/contexts/employee-context'; // Import useEmployees
 
 const vacationTypes = ["Annual Leave", "Sick Leave", "Unpaid Leave", "Public Holiday", "Other"] as const;
 
@@ -69,6 +70,7 @@ export default function NewVacationRequestPage() {
   const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
   const [isEndDatePopoverOpen, setIsEndDatePopoverOpen] = useState(false);
   const { toast } = useToast();
+  const { employees } = useEmployees(); // Get employee data
 
   const form = useForm<VacationRequestFormValues>({
     resolver: zodResolver(vacationRequestSchema),
@@ -85,6 +87,27 @@ export default function NewVacationRequestPage() {
       title: "Vacation Request Submitted",
       description: `${data.vacationType}: From ${format(data.startDate, "PPP")} to ${format(data.endDate, "PPP")}`,
     });
+
+    // Simulate notification to manager
+    const requesterId = '1'; // Assuming Alice Wonderland is the requester
+    const requester = employees.find(emp => emp.id === requesterId);
+
+    if (requester && requester.reportsTo && requester.reportsTo.length > 0) {
+      requester.reportsTo.forEach(managerId => {
+        const manager = employees.find(emp => emp.id === managerId);
+        if (manager) {
+          console.log(`Simulating: Email notification sent to manager ${manager.name} (${manager.email}) for vacation request by ${requester.name}.`);
+          console.log(`Simulating: In-app notification created for manager ${manager.name} for vacation request by ${requester.name}.`);
+        } else {
+          console.log(`Simulating: Manager with ID ${managerId} not found for ${requester.name}.`);
+        }
+      });
+    } else if (requester) {
+      console.log(`Simulating: Requester ${requester.name} has no manager defined to notify.`);
+    } else {
+      console.log(`Simulating: Requester with ID ${requesterId} not found.`);
+    }
+
     form.reset();
     setIsDialogOpen(false); // Close the dialog on successful submission
   };
@@ -126,7 +149,7 @@ export default function NewVacationRequestPage() {
                           <FormLabel>Start Date</FormLabel>
                           <Popover modal={false} open={isStartDatePopoverOpen} onOpenChange={setIsStartDatePopoverOpen}>
                             <PopoverTrigger asChild>
-                              <Button
+                               <Button
                                 variant={"outline"}
                                 className={cn(
                                   "w-full pl-3 text-left font-normal",
