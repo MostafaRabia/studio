@@ -9,18 +9,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { 
   Mail, Phone, Briefcase, Building, UserCircle, ArrowLeft, Fingerprint, 
-  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download, Eye
+  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download, Eye, Users2
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import type { Attachment } from '@/lib/placeholder-data';
-import React, { useState } from 'react';
+import type { Attachment, Employee } from '@/lib/placeholder-data';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface DetailItemProps {
   icon: React.ElementType;
@@ -86,6 +87,29 @@ const allConfigurableFields = [
 
 type FieldKey = typeof allConfigurableFields[number]['key'];
 
+function MiniEmployeeNode({ employee, isCurrent }: { employee: Employee; isCurrent?: boolean }) {
+  const displayAvatarSrc = employee.avatarDataUrl || employee.avatarUrl;
+  return (
+    <Link href={`/employees/${employee.id}`} passHref>
+      <div className={cn(
+        "flex flex-col items-center p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow min-w-[150px] max-w-[180px] bg-card cursor-pointer",
+        isCurrent && "border-primary ring-1 ring-primary"
+      )}>
+        <Avatar className="h-12 w-12 mb-2">
+          {displayAvatarSrc ? (
+            <AvatarImage src={displayAvatarSrc} alt={employee.name} asChild>
+              <Image src={displayAvatarSrc} alt={employee.name} width={48} height={48} data-ai-hint={employee.dataAiHint || 'profile picture'} />
+            </AvatarImage>
+          ) : null}
+          <AvatarFallback><UserCircle className="h-8 w-8 text-muted-foreground" /></AvatarFallback>
+        </Avatar>
+        <p className="font-semibold text-sm truncate text-center" title={employee.name}>{employee.name}</p>
+        <p className="text-xs text-muted-foreground truncate text-center" title={employee.jobTitle}>{employee.jobTitle}</p>
+      </div>
+    </Link>
+  );
+}
+
 
 export default function EmployeeProfilePage() {
   const params = useParams();
@@ -109,6 +133,17 @@ export default function EmployeeProfilePage() {
       [fieldKey]: !prev[fieldKey],
     }));
   };
+
+  const managers = useMemo(() => {
+    if (!employee || !employee.reportsTo) return [];
+    return employee.reportsTo.map(managerId => employees.find(e => e.id === managerId)).filter(Boolean) as Employee[];
+  }, [employee, employees]);
+
+  const directReports = useMemo(() => {
+    if (!employee || !employee.directReports) return [];
+    return employee.directReports.map(reportId => employees.find(e => e.id === reportId)).filter(Boolean) as Employee[];
+  }, [employee, employees]);
+
 
   if (!employee) {
     return (
@@ -258,8 +293,43 @@ export default function EmployeeProfilePage() {
             </CardContent>
           </Card>
         )}
+
+        <Card className="md:col-span-3 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users2 className="mr-2 h-5 w-5 text-primary" />
+              Team Structure
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center space-y-3 pt-4">
+            {managers.length > 0 && (
+              <div className="flex flex-col items-center space-y-2 w-full">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Managed By</p>
+                <div className="flex flex-row flex-wrap justify-center gap-4">
+                  {managers.map(manager => <MiniEmployeeNode key={manager.id} employee={manager} />)}
+                </div>
+                <div className="h-6 w-px bg-border my-1"></div> {/* Connector Line */}
+              </div>
+            )}
+
+            <MiniEmployeeNode employee={employee} isCurrent />
+
+            {directReports.length > 0 && (
+              <div className="flex flex-col items-center space-y-2 w-full">
+                <div className="h-6 w-px bg-border my-1"></div> {/* Connector Line */}
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manages</p>
+                <div className="flex flex-row flex-wrap justify-center gap-4">
+                  {directReports.map(report => <MiniEmployeeNode key={report.id} employee={report} />)}
+                </div>
+              </div>
+            )}
+
+            {managers.length === 0 && directReports.length === 0 && (
+              <p className="text-muted-foreground py-4">No direct reporting structure defined for this employee.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </>
   );
 }
-
