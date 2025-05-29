@@ -347,7 +347,12 @@ export default function NewVacationRequestPage() {
           </div>
         }
       />
-      <div className="mt-8 p-4 border-2 border-dashed border-blue-500 rounded-md"> {/* Added debug border and padding */}
+
+      <div style={{ backgroundColor: 'red', color: 'white', padding: '10px', fontSize: '18px', textAlign: 'center', margin: '10px 0' }}>
+        DEBUG: CONTENT BEFORE MY REQUESTS SECTION
+      </div>
+
+      <div className="mt-8 p-4 border-2 border-dashed border-blue-500 rounded-md">
         <h2 className="text-xl font-semibold mb-4">My Requests</h2>
         {myRequests.length > 0 ? (
           <Table>
@@ -396,6 +401,11 @@ export default function NewVacationRequestPage() {
           </div>
         )}
       </div>
+
+      <div style={{ backgroundColor: 'green', color: 'white', padding: '10px', fontSize: '18px', textAlign: 'center', margin: '10px 0' }}>
+        DEBUG: CONTENT AFTER MY REQUESTS SECTION
+      </div>
     </>
   );
 }
+
