@@ -18,10 +18,12 @@ export default function VacationsPage() {
                 My Balance
               </Button>
             </Link>
-            <Button variant="outline">
-              <Users className="mr-2 h-4 w-4" />
-              My Team Balance
-            </Button>
+            <Link href="/vacations/my-team-balance" passHref>
+              <Button variant="outline">
+                <Users className="mr-2 h-4 w-4" />
+                My Team Balance
+              </Button>
+            </Link>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               New Vacation Request
