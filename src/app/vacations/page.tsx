@@ -24,10 +24,12 @@ export default function VacationsPage() {
                 My Team Balance
               </Button>
             </Link>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Vacation Request
-            </Button>
+            <Link href="/vacations/new-request" passHref>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Vacation Request
+              </Button>
+            </Link>
             <Button variant="secondary">
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Approval Requests
