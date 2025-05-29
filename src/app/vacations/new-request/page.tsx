@@ -183,6 +183,12 @@ export default function NewVacationRequestPage() {
                 Back to Vacations
               </Button>
             </Link>
+            {/* --- TEMPORARILY SIMPLIFIED ACTIONS --- */}
+            <Button onClick={() => console.log("Test button clicked")}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Test New Request Button
+            </Button>
+            {/* 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setIsDialogOpen(true)}>
@@ -344,6 +350,7 @@ export default function NewVacationRequestPage() {
                 </Form>
               </DialogContent>
             </Dialog>
+            */}
           </div>
         }
       />
@@ -408,4 +415,3 @@ export default function NewVacationRequestPage() {
     </>
   );
 }
-
