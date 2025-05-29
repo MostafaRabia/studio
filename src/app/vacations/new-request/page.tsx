@@ -1,36 +1,219 @@
 
+"use client";
+
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle } from 'lucide-react'; // Added PlusCircle
+import { ArrowLeft, PlusCircle, CalendarIcon, Send } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { useToast } from '@/hooks/use-toast';
+
+const vacationRequestSchema = z.object({
+  startDate: z.date({
+    required_error: "Start date is required.",
+  }),
+  endDate: z.date({
+    required_error: "End date is required.",
+  }),
+}).refine(data => data.endDate >= data.startDate, {
+  message: "End date cannot be before start date.",
+  path: ["endDate"], // Path to the field that gets the error
+});
+
+type VacationRequestFormValues = z.infer<typeof vacationRequestSchema>;
 
 export default function NewVacationRequestPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<VacationRequestFormValues>({
+    resolver: zodResolver(vacationRequestSchema),
+    defaultValues: {
+      startDate: undefined,
+      endDate: undefined,
+    },
+  });
+
+  const onSubmit: SubmitHandler<VacationRequestFormValues> = (data) => {
+    console.log("Vacation Request Data:", data);
+    toast({
+      title: "Vacation Request Submitted",
+      description: `From ${format(data.startDate, "PPP")} to ${format(data.endDate, "PPP")}`,
+    });
+    form.reset();
+    setIsDialogOpen(false); // Close the dialog on successful submission
+  };
+
   return (
     <>
       <PageHeader
         title="New Vacation Request"
-        description="Fill out the form below to submit your vacation request."
+        description="Submit your vacation request."
         actions={
-          <div className="flex flex-col sm:flex-row gap-2"> {/* Wrapper for buttons */}
+          <div className="flex flex-col sm:flex-row gap-2">
             <Link href="/vacations" passHref>
               <Button variant="outline">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Vacations
               </Button>
             </Link>
-            {/* New Button Added Here */}
-            <Link href="/vacations/new-request" passHref> {/* Links to itself */}
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Vacation Request
-              </Button>
-            </Link>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Vacation Request
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Request Time Off</DialogTitle>
+                  <DialogDescription>
+                    Select the start and end dates for your vacation. Click submit when you're done.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+                    <FormField
+                      control={form.control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a start date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  field.onChange(date);
+                                  // Optionally trigger validation for endDate if startDate changes
+                                  if (form.getValues("endDate")) {
+                                    form.trigger("endDate");
+                                  }
+                                }}
+                                disabled={(date) =>
+                                  date < new Date(new Date().setHours(0,0,0,0)) // Disable past dates
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>End Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick an end date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date < (form.getValues("startDate") || new Date(new Date().setHours(0,0,0,0)))
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline">
+                          Cancel
+                        </Button>
+                      </DialogClose>
+                      <Button type="submit" disabled={form.formState.isSubmitting}>
+                         <Send className="mr-2 h-4 w-4" />
+                        {form.formState.isSubmitting ? "Submitting..." : "Submit Request"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
         }
       />
       <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
-        <p className="text-muted-foreground">
-          Vacation request form will be here.
+        <p className="text-muted-foreground text-center">
+          Your vacation requests and history will be displayed here. <br/>
+          Click "New Vacation Request" above to submit a new request.
         </p>
       </div>
     </>
