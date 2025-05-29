@@ -84,7 +84,13 @@ export default function MyTeamBalancePage() {
               <TableBody>
                 {teamMemberBalances.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name} ({member.jobTitle})</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/vacations/employee-balance/${member.id}`} passHref>
+                        <span className="hover:text-primary hover:underline cursor-pointer">
+                          {member.name} ({member.jobTitle})
+                        </span>
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-right">{member.totalEntitlementDays}</TableCell>
                     <TableCell className="text-right">{member.availableDays}</TableCell>
                     <TableCell className="text-right">{member.consumedDays}</TableCell>
