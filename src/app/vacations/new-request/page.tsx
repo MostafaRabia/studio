@@ -54,6 +54,8 @@ type VacationRequestFormValues = z.infer<typeof vacationRequestSchema>;
 
 export default function NewVacationRequestPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
+  const [isEndDatePopoverOpen, setIsEndDatePopoverOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<VacationRequestFormValues>({
@@ -109,7 +111,7 @@ export default function NewVacationRequestPage() {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Start Date</FormLabel>
-                          <Popover>
+                          <Popover open={isStartDatePopoverOpen} onOpenChange={setIsStartDatePopoverOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
@@ -131,7 +133,7 @@ export default function NewVacationRequestPage() {
                             <PopoverContent 
                               className="w-auto p-0" 
                               align="start"
-                              onOpenAutoFocus={(e) => e.preventDefault()} // Prevents focus issues with dialog
+                              onOpenAutoFocus={(e) => e.preventDefault()} 
                             >
                               <Calendar
                                 mode="single"
@@ -139,12 +141,13 @@ export default function NewVacationRequestPage() {
                                 onSelect={(date) => {
                                   field.onChange(date);
                                   if (form.getValues("endDate") && date && form.getValues("endDate") < date) {
-                                    form.setValue("endDate", date); // Also set end date if start date is after it
+                                    form.setValue("endDate", date); 
                                   }
-                                  form.trigger("endDate"); // Validate end date based on new start date
+                                  form.trigger("endDate"); 
+                                  setIsStartDatePopoverOpen(false);
                                 }}
                                 disabled={(date) =>
-                                  date < new Date(new Date().setDate(new Date().getDate() -1)) // Disable past dates (allow today)
+                                  date < new Date(new Date().setDate(new Date().getDate() -1)) 
                                 }
                                 initialFocus
                               />
@@ -160,7 +163,7 @@ export default function NewVacationRequestPage() {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>End Date</FormLabel>
-                          <Popover>
+                          <Popover open={isEndDatePopoverOpen} onOpenChange={setIsEndDatePopoverOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
@@ -182,12 +185,15 @@ export default function NewVacationRequestPage() {
                             <PopoverContent 
                               className="w-auto p-0" 
                               align="start"
-                              onOpenAutoFocus={(e) => e.preventDefault()} // Prevents focus issues with dialog
+                              onOpenAutoFocus={(e) => e.preventDefault()} 
                             >
                               <Calendar
                                 mode="single"
                                 selected={field.value}
-                                onSelect={field.onChange}
+                                onSelect={(date) => {
+                                  field.onChange(date);
+                                  setIsEndDatePopoverOpen(false);
+                                }}
                                 disabled={(date) => {
                                   const startDate = form.getValues("startDate");
                                   const yesterday = new Date(new Date().setDate(new Date().getDate() -1));
