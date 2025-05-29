@@ -3,7 +3,7 @@
 
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, CalendarIcon, Send } from 'lucide-react';
+import { ArrowLeft, PlusCircle, CalendarIcon, Send, CaseSensitive } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -36,7 +36,16 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+
+const vacationTypes = ["Annual Leave", "Sick Leave", "Unpaid Leave", "Public Holiday", "Other"] as const;
 
 const vacationRequestSchema = z.object({
   startDate: z.date({
@@ -45,6 +54,9 @@ const vacationRequestSchema = z.object({
   endDate: z.date({
     required_error: "End date is required.",
   }),
+  vacationType: z.string({
+    required_error: "Vacation type is required.",
+  }).min(1, "Vacation type is required."),
 }).refine(data => data.endDate >= data.startDate, {
   message: "End date cannot be before start date.",
   path: ["endDate"], // Path to the field that gets the error
@@ -63,6 +75,7 @@ export default function NewVacationRequestPage() {
     defaultValues: {
       startDate: undefined,
       endDate: undefined,
+      vacationType: "",
     },
   });
 
@@ -70,7 +83,7 @@ export default function NewVacationRequestPage() {
     console.log("Vacation Request Data:", data);
     toast({
       title: "Vacation Request Submitted",
-      description: `From ${format(data.startDate, "PPP")} to ${format(data.endDate, "PPP")}`,
+      description: `${data.vacationType}: From ${format(data.startDate, "PPP")} to ${format(data.endDate, "PPP")}`,
     });
     form.reset();
     setIsDialogOpen(false); // Close the dialog on successful submission
@@ -100,7 +113,7 @@ export default function NewVacationRequestPage() {
                 <DialogHeader>
                   <DialogTitle>Request Time Off</DialogTitle>
                   <DialogDescription>
-                    Select the start and end dates for your vacation. Click submit when you're done.
+                    Select the start and end dates, and type for your vacation. Click submit when you're done.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -206,6 +219,35 @@ export default function NewVacationRequestPage() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="vacationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            <CaseSensitive className="mr-2 h-4 w-4 text-muted-foreground" />
+                            Vacation Type
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a vacation type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {vacationTypes.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <DialogFooter>
                       <DialogClose asChild>
                         <Button type="button" variant="outline">
@@ -233,4 +275,3 @@ export default function NewVacationRequestPage() {
     </>
   );
 }
-
