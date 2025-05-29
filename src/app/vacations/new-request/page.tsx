@@ -5,11 +5,11 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, CalendarIcon, Send, CaseSensitive } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format } from 'date-fns';
+import { format, differenceInCalendarDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 import {
@@ -43,8 +43,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { useEmployees } from '@/contexts/employee-context'; // Import useEmployees
+import { useEmployees } from '@/contexts/employee-context';
 
 const vacationTypes = ["Annual Leave", "Sick Leave", "Unpaid Leave", "Public Holiday", "Other"] as const;
 
@@ -60,17 +69,53 @@ const vacationRequestSchema = z.object({
   }).min(1, "Vacation type is required."),
 }).refine(data => data.endDate >= data.startDate, {
   message: "End date cannot be before start date.",
-  path: ["endDate"], // Path to the field that gets the error
+  path: ["endDate"],
 });
 
 type VacationRequestFormValues = z.infer<typeof vacationRequestSchema>;
+
+interface MyVacationRequest {
+  id: string;
+  startDate: Date;
+  endDate: Date;
+  numberOfDays: number;
+  vacationType: string;
+  submittingDate: Date;
+  approvedFrom?: string;
+  status: "Pending" | "Approved" | "Rejected";
+}
+
+const initialMockRequests: MyVacationRequest[] = [
+  {
+    id: 'req1',
+    startDate: new Date(2024, 6, 20), // July 20, 2024
+    endDate: new Date(2024, 6, 22), // July 22, 2024
+    numberOfDays: 3,
+    vacationType: "Annual Leave",
+    submittingDate: new Date(2024, 6, 1), // July 1, 2024
+    approvedFrom: "Bob The Builder",
+    status: "Approved",
+  },
+  {
+    id: 'req2',
+    startDate: new Date(2024, 7, 5), // Aug 5, 2024
+    endDate: new Date(2024, 7, 9), // Aug 9, 2024
+    numberOfDays: 5,
+    vacationType: "Annual Leave",
+    submittingDate: new Date(2024, 6, 15), // July 15, 2024
+    approvedFrom: "Bob The Builder",
+    status: "Pending",
+  },
+];
+
 
 export default function NewVacationRequestPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
   const [isEndDatePopoverOpen, setIsEndDatePopoverOpen] = useState(false);
+  const [myRequests, setMyRequests] = useState<MyVacationRequest[]>(initialMockRequests);
   const { toast } = useToast();
-  const { employees } = useEmployees(); // Get employee data
+  const { employees } = useEmployees();
 
   const form = useForm<VacationRequestFormValues>({
     resolver: zodResolver(vacationRequestSchema),
@@ -82,41 +127,54 @@ export default function NewVacationRequestPage() {
   });
 
   const onSubmit: SubmitHandler<VacationRequestFormValues> = (data) => {
-    console.log("Vacation Request Data:", data);
+    const numberOfDays = differenceInCalendarDays(data.endDate, data.startDate) + 1;
+    const submittingDate = new Date();
+    const requesterId = '1'; // Assuming Alice Wonderland is the requester
+    const requester = employees.find(emp => emp.id === requesterId);
+    let managerName = "N/A";
+
+    if (requester && requester.reportsTo && requester.reportsTo.length > 0) {
+      const manager = employees.find(emp => emp.id === requester.reportsTo![0]); // Assuming first manager
+      if (manager) {
+        managerName = manager.name;
+        console.log(`Simulating: Email notification sent to manager ${manager.name} (${manager.email}) for vacation request by ${requester.name}.`);
+        console.log(`Simulating: In-app notification created for manager ${manager.name} for vacation request by ${requester.name}.`);
+      } else {
+         console.log(`Simulating: Manager with ID ${requester.reportsTo[0]} not found for ${requester.name}.`);
+      }
+    } else if (requester) {
+        console.log(`Simulating: Requester ${requester.name} has no manager defined to notify.`);
+    } else {
+        console.log(`Simulating: Requester with ID ${requesterId} not found.`);
+    }
+
+
+    const newRequest: MyVacationRequest = {
+      id: `req${Date.now()}`,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      numberOfDays,
+      vacationType: data.vacationType,
+      submittingDate,
+      approvedFrom: managerName, // Placeholder, actual approval logic needed
+      status: "Pending",
+    };
+
+    setMyRequests(prevRequests => [newRequest, ...prevRequests]);
+
     toast({
       title: "Vacation Request Submitted",
       description: `${data.vacationType}: From ${format(data.startDate, "PPP")} to ${format(data.endDate, "PPP")}`,
     });
-
-    // Simulate notification to manager
-    const requesterId = '1'; // Assuming Alice Wonderland is the requester
-    const requester = employees.find(emp => emp.id === requesterId);
-
-    if (requester && requester.reportsTo && requester.reportsTo.length > 0) {
-      requester.reportsTo.forEach(managerId => {
-        const manager = employees.find(emp => emp.id === managerId);
-        if (manager) {
-          console.log(`Simulating: Email notification sent to manager ${manager.name} (${manager.email}) for vacation request by ${requester.name}.`);
-          console.log(`Simulating: In-app notification created for manager ${manager.name} for vacation request by ${requester.name}.`);
-        } else {
-          console.log(`Simulating: Manager with ID ${managerId} not found for ${requester.name}.`);
-        }
-      });
-    } else if (requester) {
-      console.log(`Simulating: Requester ${requester.name} has no manager defined to notify.`);
-    } else {
-      console.log(`Simulating: Requester with ID ${requesterId} not found.`);
-    }
-
     form.reset();
-    setIsDialogOpen(false); // Close the dialog on successful submission
+    setIsDialogOpen(false);
   };
 
   return (
     <>
       <PageHeader
         title="New Vacation Request"
-        description="Submit your vacation request."
+        description="Submit your vacation request and view your request history."
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
             <Link href="/vacations" passHref>
@@ -164,10 +222,10 @@ export default function NewVacationRequestPage() {
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent 
-                              className="w-auto p-0" 
+                            <PopoverContent
+                              className="w-auto p-0"
                               align="start"
-                              onOpenAutoFocus={(e) => e.preventDefault()} 
+                              onOpenAutoFocus={(e) => e.preventDefault()}
                             >
                               <Calendar
                                 mode="single"
@@ -175,13 +233,13 @@ export default function NewVacationRequestPage() {
                                 onSelect={(date) => {
                                   field.onChange(date);
                                   if (form.getValues("endDate") && date && form.getValues("endDate") < date) {
-                                    form.setValue("endDate", date); 
+                                    form.setValue("endDate", date);
                                   }
-                                  form.trigger("endDate"); 
+                                  form.trigger("endDate");
                                   setIsStartDatePopoverOpen(false);
                                 }}
                                 disabled={(date) =>
-                                  date < new Date(new Date().setDate(new Date().getDate() -1)) 
+                                  date < new Date(new Date().setDate(new Date().getDate() -1))
                                 }
                                 initialFocus
                               />
@@ -214,10 +272,10 @@ export default function NewVacationRequestPage() {
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent 
-                              className="w-auto p-0" 
+                            <PopoverContent
+                              className="w-auto p-0"
                               align="start"
-                              onOpenAutoFocus={(e) => e.preventDefault()} 
+                              onOpenAutoFocus={(e) => e.preventDefault()}
                             >
                               <Calendar
                                 mode="single"
@@ -289,12 +347,57 @@ export default function NewVacationRequestPage() {
           </div>
         }
       />
-      <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
-        <p className="text-muted-foreground text-center">
-          Your vacation requests and history will be displayed here. <br/>
-          Click "New Vacation Request" above to submit a new request.
-        </p>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">My Requests</h2>
+        {myRequests.length > 0 ? (
+          <Table>
+            <TableCaption>A list of your recent vacation requests.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead className="text-right">Days</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Submitted</TableHead>
+                <TableHead>Approved From</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {myRequests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell>{format(request.startDate, "PPP")}</TableCell>
+                  <TableCell>{format(request.endDate, "PPP")}</TableCell>
+                  <TableCell className="text-right">{request.numberOfDays}</TableCell>
+                  <TableCell>{request.vacationType}</TableCell>
+                  <TableCell>{format(request.submittingDate, "PPP p")}</TableCell>
+                  <TableCell>{request.approvedFrom || 'N/A'}</TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "px-2 py-1 text-xs font-semibold rounded-full",
+                        request.status === "Approved" && "bg-green-100 text-green-700",
+                        request.status === "Pending" && "bg-yellow-100 text-yellow-700",
+                        request.status === "Rejected" && "bg-red-100 text-red-700"
+                      )}
+                    >
+                      {request.status}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
+            <p className="text-muted-foreground text-center">
+              You haven't submitted any vacation requests yet.
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
 }
+
+    
