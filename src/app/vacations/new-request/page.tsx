@@ -25,7 +25,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -90,7 +89,7 @@ export default function NewVacationRequestPage() {
             </Link>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setIsDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   New Vacation Request
                 </Button>
@@ -129,19 +128,23 @@ export default function NewVacationRequestPage() {
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent 
+                              className="w-auto p-0" 
+                              align="start"
+                              onOpenAutoFocus={(e) => e.preventDefault()} // Prevents focus issues with dialog
+                            >
                               <Calendar
                                 mode="single"
                                 selected={field.value}
                                 onSelect={(date) => {
                                   field.onChange(date);
-                                  // Optionally trigger validation for endDate if startDate changes
-                                  if (form.getValues("endDate")) {
-                                    form.trigger("endDate");
+                                  if (form.getValues("endDate") && date && form.getValues("endDate") < date) {
+                                    form.setValue("endDate", date); // Also set end date if start date is after it
                                   }
+                                  form.trigger("endDate"); // Validate end date based on new start date
                                 }}
                                 disabled={(date) =>
-                                  date < new Date(new Date().setHours(0,0,0,0)) // Disable past dates
+                                  date < new Date(new Date().setDate(new Date().getDate() -1)) // Disable past dates (allow today)
                                 }
                                 initialFocus
                               />
@@ -176,14 +179,23 @@ export default function NewVacationRequestPage() {
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent 
+                              className="w-auto p-0" 
+                              align="start"
+                              onOpenAutoFocus={(e) => e.preventDefault()} // Prevents focus issues with dialog
+                            >
                               <Calendar
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date < (form.getValues("startDate") || new Date(new Date().setHours(0,0,0,0)))
-                                }
+                                disabled={(date) => {
+                                  const startDate = form.getValues("startDate");
+                                  const yesterday = new Date(new Date().setDate(new Date().getDate() -1));
+                                  if (startDate) {
+                                    return date < startDate || date < yesterday;
+                                  }
+                                  return date < yesterday;
+                                }}
                                 initialFocus
                               />
                             </PopoverContent>
