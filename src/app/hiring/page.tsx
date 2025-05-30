@@ -187,6 +187,21 @@ export default function HiringPage() {
     setIsDialogOpen(false);
     form.reset();
   };
+  
+  const handleApproveRequest = (requestId: string) => {
+    setHiringRequests(prev => 
+      prev.map(req => req.id === requestId ? { ...req, status: 'Approved', comment: 'Approved by manager.' } : req)
+    );
+    toast({ title: "Request Approved", description: `Hiring request ${requestId} has been approved.`});
+  };
+
+  const handleRejectRequest = (requestId: string) => {
+     setHiringRequests(prev => 
+      prev.map(req => req.id === requestId ? { ...req, status: 'Rejected', comment: 'Rejected by manager.' } : req)
+    );
+    toast({ title: "Request Rejected", description: `Hiring request ${requestId} has been rejected.`, variant: "destructive"});
+  };
+
 
   return (
     <>
@@ -390,7 +405,7 @@ export default function HiringPage() {
                   <TableHead>Department</TableHead>
                   <TableHead>Created Date</TableHead>
                   <TableHead>Created By</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Status / Action</TableHead>
                   <TableHead>HR Responsible</TableHead>
                   <TableHead>Comment</TableHead>
                 </TableRow>
@@ -403,21 +418,42 @@ export default function HiringPage() {
                     <TableCell>{request.department}</TableCell>
                     <TableCell>{format(request.createdDate, 'PPP')}</TableCell>
                     <TableCell>{request.createdBy}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          request.status === 'Approved' ? 'default' :
-                          request.status === 'Pending' ? 'secondary' :
-                          'destructive'
-                        }
-                        className={cn(
-                            request.status === 'Approved' && 'bg-green-500 hover:bg-green-600 text-white',
-                            request.status === 'Pending' && 'bg-yellow-500 hover:bg-yellow-600 text-black',
-                            request.status === 'Rejected' && 'bg-red-500 hover:bg-red-600 text-white'
-                        )}
-                      >
-                        {request.status}
-                      </Badge>
+                    <TableCell className="text-center">
+                      {request.status === 'Pending' ? (
+                        <div className="flex justify-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-green-500 text-green-700 hover:bg-green-50 hover:text-green-800"
+                            onClick={() => handleApproveRequest(request.id)}
+                          >
+                            <Check className="mr-1 h-4 w-4" /> Approve
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-red-500 text-red-700 hover:bg-red-50 hover:text-red-800"
+                            onClick={() => handleRejectRequest(request.id)}
+                          >
+                            <X className="mr-1 h-4 w-4" /> Reject
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge
+                          variant={
+                            request.status === 'Approved' ? 'default' :
+                            request.status === 'Rejected' ? 'destructive' :
+                            'secondary' // Fallback for pending if needed, though covered by buttons
+                          }
+                          className={cn(
+                              request.status === 'Approved' && 'bg-green-500 hover:bg-green-600 text-white',
+                              request.status === 'Rejected' && 'bg-red-500 hover:bg-red-600 text-white'
+                              // No explicit style for pending here as buttons cover it
+                          )}
+                        >
+                          {request.status}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>{request.hrResponsible}</TableCell>
                     <TableCell className="max-w-xs truncate" title={request.comment || undefined}>
@@ -439,5 +475,3 @@ export default function HiringPage() {
     </>
   );
 }
-
-    
