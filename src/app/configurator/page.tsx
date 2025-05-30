@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, UserPlus, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 export default function ConfiguratorPage() {
@@ -25,6 +25,7 @@ export default function ConfiguratorPage() {
         <Card>
           <CardHeader>
             <CardTitle>User & Employee Management</CardTitle>
+            <CardDescription>Configure employee profiles and user access.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Link href="/employees/new" passHref>
@@ -51,6 +52,7 @@ export default function ConfiguratorPage() {
         <Card>
           <CardHeader>
             <CardTitle>Policy & Document Management</CardTitle>
+            <CardDescription>Access and manage company policies and key documents.</CardDescription> 
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Link href="/resources/7" passHref>
