@@ -38,7 +38,11 @@ export default function EmployeeHierarchyPage() {
   const { employees } = useEmployees();
   const { toast } = useToast();
 
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>(() => {
+    // Initialize with unique departments from employees
+    const uniqueDepartments = Array.from(new Set(employees.map(emp => emp.department).filter(Boolean)));
+    return uniqueDepartments.sort();
+  });
   const [isDepartmentDialogOpen, setIsDepartmentDialogOpen] = useState(false);
 
   const departmentForm = useForm<DepartmentFormValues>({
@@ -181,21 +185,25 @@ export default function EmployeeHierarchyPage() {
             Company Departments
           </CardTitle>
           <CardDescription>
-            List of registered departments.
+            List of registered departments. Click a department to view its members.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {departments.length > 0 ? (
             <ul className="space-y-2">
               {departments.map((dept, index) => (
-                <li key={index} className="p-3 border rounded-md bg-muted/50">
-                  {dept}
+                <li key={index}>
+                  <Link href={`/employees/department/${encodeURIComponent(dept)}`} passHref>
+                    <Button variant="link" className="p-3 border rounded-md bg-muted/50 hover:bg-muted/80 w-full justify-start text-left text-foreground hover:no-underline hover:text-primary">
+                      {dept}
+                    </Button>
+                  </Link>
                 </li>
               ))}
             </ul>
           ) : (
             <div className="flex items-center justify-center h-20 border-2 border-dashed rounded-md">
-              <p className="text-muted-foreground">No departments added yet. Click "Add Department" to create one.</p>
+              <p className="text-muted-foreground">No departments added or found. Click "Add Department" to create one.</p>
             </div>
           )}
         </CardContent>
