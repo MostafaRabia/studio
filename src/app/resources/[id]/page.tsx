@@ -8,7 +8,8 @@ import type { Resource } from '@/lib/placeholder-data';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Download } from 'lucide-react';
+import ReactMarkdown from 'react-markdown'; // For rendering internal text
 import React from 'react';
 
 export default function ResourceDetailPage() {
@@ -16,6 +17,8 @@ export default function ResourceDetailPage() {
   const params = useParams();
   const { id } = params;
 
+  // In a real app, you'd fetch the resource from a context or API
+  // For this prototype, we find it in the static placeholder data
   const resource = allPlaceholderResources.find(r => r.id === id);
 
   if (!resource) {
@@ -36,7 +39,7 @@ export default function ResourceDetailPage() {
     <>
       <PageHeader
         title={resource.title}
-        description="Details for this resource."
+        description={resource.description || "Details for this resource."}
         actions={
           <Button variant="outline" onClick={() => router.push('/resources')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -51,16 +54,49 @@ export default function ResourceDetailPage() {
             <CardDescription>{resource.description}</CardDescription>
           )}
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            You can access this resource externally using the link below:
-          </p>
-          <Button asChild variant="default" size="lg">
-            <a href={resource.link} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Access External Resource
-            </a>
-          </Button>
+        <CardContent className="space-y-6">
+          {resource.internalText && (
+            <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none dark:prose-invert p-4 border rounded-md bg-muted/20">
+              <h3 className="text-lg font-semibold mb-2 border-b pb-2">Content:</h3>
+              {/* Using ReactMarkdown for basic markdown rendering. For more complex HTML, consider a safer rendering method. */}
+              <ReactMarkdown>{resource.internalText}</ReactMarkdown>
+            </div>
+          )}
+
+          {resource.textAttachment && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Attachment:</h3>
+              <div className="flex items-center justify-between p-3 border rounded-md bg-secondary/50">
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium">{resource.textAttachment.name}</span>
+                  <span className="text-xs text-muted-foreground">({(resource.textAttachment.size / 1024).toFixed(1)} KB)</span>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <a href={resource.textAttachment.dataUrl} download={resource.textAttachment.name}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Attachment
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {resource.link && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">External Link:</h3>
+              <Button asChild variant="default" size="lg">
+                <a href={resource.link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Access External Resource
+                </a>
+              </Button>
+            </div>
+          )}
+
+          {!resource.internalText && !resource.textAttachment && !resource.link && (
+            <p className="text-muted-foreground">This resource does not have any content or an external link configured.</p>
+          )}
         </CardContent>
       </Card>
     </>

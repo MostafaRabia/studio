@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Resource } from '@/lib/placeholder-data';
+import type { Resource, Attachment } from '@/lib/placeholder-data';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -11,13 +11,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info, Folder, Link as LinkIconLucide } from 'lucide-react';
+import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info, Folder, Link as LinkIconLucide, Paperclip, X } from 'lucide-react';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const iconOptions = [
   { value: 'FileText', label: 'File Text' },
@@ -48,7 +49,7 @@ const getIconComponent = (iconName?: string): LucideIcon => {
 interface ResourceCardProps {
   resource: Resource;
   onEdit: (resource: Resource) => void;
-  onRemoveRequest: (resourceId: string) => void; // Renamed to avoid confusion with DOM onRemove
+  onRemoveRequest: (resourceId: string) => void;
 }
 
 function ResourceCard({ resource, onEdit, onRemoveRequest }: ResourceCardProps) {
@@ -70,9 +71,6 @@ function ResourceCard({ resource, onEdit, onRemoveRequest }: ResourceCardProps) 
               )}
             </div>
           </CardHeader>
-          {/* CardContent that previously held the external link is removed. 
-              The link wrapper itself will grow due to flex-grow on the anchor tag.
-          */}
         </a>
       </Link>
       <CardFooter className="pt-4 border-t">
@@ -80,7 +78,6 @@ function ResourceCard({ resource, onEdit, onRemoveRequest }: ResourceCardProps) 
           <Button variant="outline" size="sm" onClick={() => onEdit(resource)}>
             <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
           </Button>
-          {/* The AlertDialogTrigger is outside this component, so onRemoveRequest directly calls the handler to open it */}
           <Button variant="destructive" size="sm" onClick={() => onRemoveRequest(resource.id)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
           </Button>
@@ -95,16 +92,32 @@ const newCategoryFormSchema = z.object({
 });
 type NewCategoryFormValues = z.infer<typeof newCategoryFormSchema>;
 
+const attachmentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  dataUrl: z.string(),
+  size: z.number(),
+});
+
 const resourceFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters.").max(100),
   description: z.string().max(200).optional(),
-  link: z.string().url("Please enter a valid URL."),
+  link: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   category: z.string().min(1, "Category is required."),
   iconName: z.string().min(1, "Icon is required."),
+  internalText: z.string().optional(),
+  textAttachmentFile: z.custom<FileList>().optional(),
+  textAttachment: attachmentSchema.optional(), // To store existing attachment details
+}).refine(data => !!data.link || !!data.internalText, {
+  message: "Either an external link or internal text content is required.",
+  path: ["link"], // You can choose a more general path or duplicate for internalText
 });
+
 export type ResourceFormValues = z.infer<typeof resourceFormSchema>;
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface ResourceHubClientProps {
   initialResources: Resource[];
@@ -117,6 +130,10 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [isResourceFormOpen, setIsResourceFormOpen] = useState(false);
   const [resourceToRemove, setResourceToRemove] = useState<string | null>(null);
+  const [textAttachmentPreview, setTextAttachmentPreview] = useState<{ name: string; size: number; type: string } | null>(null);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   const derivedCategories = useMemo(() => {
     const categoriesSet = new Set(resources.map(r => r.category || 'Other'));
@@ -126,8 +143,8 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
   const [allCategories, setAllCategories] = useState<string[]>(derivedCategories);
 
   useEffect(() => {
-    const newDerivedCategories = Array.from(new Set(resources.map(r => r.category || 'Other')));
-    setAllCategories(newDerivedCategories);
+    const newDerivedCategories = Array.from(new Set([...resources.map(r => r.category || 'Other'), ...allCategories])).filter(Boolean);
+    setAllCategories(newDerivedCategories.sort((a, b) => a.localeCompare(b)));
   }, [resources]);
 
 
@@ -144,8 +161,42 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       link: "",
       category: "",
       iconName: "ExternalLink",
+      internalText: "",
+      textAttachment: undefined,
     },
   });
+
+  const handleTextAttachmentFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ title: "File too large", description: `${file.name} exceeds 5MB limit.`, variant: "destructive" });
+        if (fileInputRef.current) fileInputRef.current.value = ""; // Clear the input
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newAttachment: Attachment = {
+          id: Date.now().toString(),
+          name: file.name,
+          type: file.type,
+          dataUrl: reader.result as string,
+          size: file.size,
+        };
+        resourceForm.setValue('textAttachment', newAttachment, { shouldValidate: true });
+        setTextAttachmentPreview({ name: file.name, size: file.size, type: file.type });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeTextAttachment = () => {
+    resourceForm.setValue('textAttachment', undefined, { shouldValidate: true });
+    resourceForm.setValue('textAttachmentFile', undefined);
+    setTextAttachmentPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = ""; // Clear the file input
+  };
+
 
   const handleAddCategory: SubmitHandler<NewCategoryFormValues> = (data) => {
     const newCategoryName = data.categoryName.trim();
@@ -165,29 +216,51 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       id: resource.id,
       title: resource.title,
       description: resource.description || "",
-      link: resource.link,
+      link: resource.link || "",
       category: resource.category,
       iconName: resource.iconName,
+      internalText: resource.internalText || "",
+      textAttachment: resource.textAttachment,
     });
+    if (resource.textAttachment) {
+      setTextAttachmentPreview({ name: resource.textAttachment.name, size: resource.textAttachment.size, type: resource.textAttachment.type });
+    } else {
+      setTextAttachmentPreview(null);
+    }
     setIsResourceFormOpen(true);
   };
 
   const handleResourceFormSubmit: SubmitHandler<ResourceFormValues> = (data) => {
+    const processedData: Partial<Resource> = {
+      ...data,
+      link: data.link || undefined, // Ensure empty string becomes undefined
+      internalText: data.internalText || undefined,
+      textAttachment: data.textAttachment, // This should be the Attachment object or undefined
+    };
+    
+    // Remove file specific fields not part of Resource model
+    // delete (processedData as any).textAttachmentFile;
+
+
     if (editingResource) {
-      setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...data, id: editingResource.id } : r));
+      setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...processedData, id: editingResource.id } as Resource : r));
       toast({ title: "Resource Updated", description: `"${data.title}" has been updated.` });
     } else {
       const newResource: Resource = {
         id: Date.now().toString(),
-        ...data,
-        description: data.description || "",
+        ...processedData,
+        title: data.title,
+        category: data.category,
+        iconName: data.iconName,
       };
       setResources(prev => [newResource, ...prev]);
       toast({ title: "Resource Added", description: `"${data.title}" has been added.` });
     }
     setIsResourceFormOpen(false);
     setEditingResource(null);
-    resourceForm.reset();
+    resourceForm.reset({ title: "", description: "", link: "", category: "", iconName: "ExternalLink", internalText: "", textAttachment: undefined });
+    setTextAttachmentPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleOpenRemoveResourceDialog = (resourceId: string) => {
@@ -225,7 +298,9 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       <div className="flex justify-end gap-2">
         <Button onClick={() => {
           setEditingResource(null);
-          resourceForm.reset({ title: "", description: "", link: "", category: sortedDisplayCategories[0] || "", iconName: "ExternalLink" });
+          resourceForm.reset({ title: "", description: "", link: "", category: sortedDisplayCategories[0] || "", iconName: "ExternalLink", internalText: "", textAttachment: undefined });
+          setTextAttachmentPreview(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
           setIsResourceFormOpen(true);
         }}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add New Resource
@@ -270,9 +345,11 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
         if (!isOpen) {
           setEditingResource(null);
           resourceForm.reset();
+          setTextAttachmentPreview(null);
+           if (fileInputRef.current) fileInputRef.current.value = "";
         }
       }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingResource ? "Edit Resource" : "Add New Resource"}</DialogTitle>
           </DialogHeader>
@@ -289,13 +366,6 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
                 <FormItem>
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl><Textarea placeholder="Brief description of the resource" {...field} value={field.value || ''} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}/>
-              <FormField control={resourceForm.control} name="link" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Link URL</FormLabel>
-                  <FormControl><Input type="url" placeholder="https://example.com/resource" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
@@ -323,6 +393,70 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
                   <FormMessage />
                 </FormItem>
               )}/>
+              
+              <div className="my-4 border-t pt-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Content Type (select at least one)</h3>
+                 <FormField control={resourceForm.control} name="internalText" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Internal Text Content</FormLabel>
+                    <FormControl><Textarea placeholder="Enter text content for this resource..." rows={5} {...field} value={field.value || ''} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+
+                <FormField
+                  control={resourceForm.control}
+                  name="textAttachmentFile" 
+                  render={() => ( 
+                    <FormItem className="mt-4">
+                      <FormLabel className="flex items-center">
+                        <Paperclip className="mr-2 h-4 w-4 text-muted-foreground" />
+                        Attach File to Internal Text (Optional)
+                      </FormLabel>
+                      {!textAttachmentPreview && !resourceForm.getValues('textAttachment') && (
+                        <FormControl>
+                          <Input 
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleTextAttachmentFileChange}
+                            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                          />
+                        </FormControl>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {(textAttachmentPreview || resourceForm.getValues('textAttachment')) && (
+                  <div className="mt-2 p-2 border rounded-md bg-secondary/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm truncate max-w-xs" title={textAttachmentPreview?.name || resourceForm.getValues('textAttachment')?.name}>
+                          {textAttachmentPreview?.name || resourceForm.getValues('textAttachment')?.name}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {((textAttachmentPreview?.size || resourceForm.getValues('textAttachment')?.size || 0) / 1024).toFixed(1)} KB
+                        </Badge>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" onClick={removeTextAttachment} className="h-6 w-6">
+                        <X className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="my-4 border-t pt-4">
+                <FormField control={resourceForm.control} name="link" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>External Link URL (Optional)</FormLabel>
+                    <FormControl><Input type="url" placeholder="https://example.com/resource" {...field} value={field.value || ''} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+              </div>
+
               <DialogFooter className="pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsResourceFormOpen(false)}>Cancel</Button>
                 <Button type="submit">{editingResource ? "Save Changes" : "Add Resource"}</Button>
@@ -349,7 +483,6 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
 
       {sortedDisplayCategories.length > 0 ? (
         sortedDisplayCategories.map((category) => {

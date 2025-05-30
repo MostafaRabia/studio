@@ -48,10 +48,12 @@ export interface Resource {
   id: string;
   title: string;
   description?: string;
-  link: string;
+  link?: string; // Made optional
   category: string;
-  iconName: string; // Changed from icon: LucideIcon
+  iconName: string;
   dataAiHint?: string;
+  internalText?: string; // New field for internal text content
+  textAttachment?: Attachment; // New field for attachment related to internal text
 }
 
 export const employees: Employee[] = [
@@ -172,52 +174,56 @@ export const resources: Resource[] = [
     description: 'Comprehensive guide to company policies and procedures.',
     link: '#',
     category: 'Company Policies',
-    iconName: 'FileText', // Changed
+    iconName: 'FileText',
     dataAiHint: 'document policy',
+    internalText: 'This is the main employee handbook. Please read it carefully. It covers topics such as code of conduct, leave policies, and more.',
   },
   {
     id: '2',
     title: 'Benefits Portal',
     description: 'Access your health insurance, retirement plans, and other benefits.',
-    link: '#',
+    link: 'https://example.com/benefits', // Example external link
     category: 'Benefits',
-    iconName: 'ShieldCheck', // Changed
+    iconName: 'ShieldCheck',
     dataAiHint: 'health benefits',
   },
   {
     id: '3',
     title: 'IT Support Wiki',
     description: 'Find help for common IT issues and request support.',
-    link: '#',
+    link: 'https://example.com/it-support', // Example external link
     category: 'IT & Support',
-    iconName: 'ExternalLink', // Changed
+    iconName: 'ExternalLink',
     dataAiHint: 'tech support',
   },
   {
     id: '4',
     title: 'Performance Review Guidelines',
     description: 'Information on the performance review process.',
-    link: '#',
     category: 'Career Development',
-    iconName: 'Handshake', // Changed
+    iconName: 'Handshake',
     dataAiHint: 'career growth',
+    internalText: 'The annual performance review cycle begins on November 1st. Ensure all self-assessments are submitted by October 15th. Manager reviews are due by November 15th.',
+    // Example of a textAttachment (though dataUrl would be very long in reality)
+    // textAttachment: { id: 'att1', name: 'Review_Process.pdf', type: 'application/pdf', dataUrl: 'data:application/pdf;base64,JVBERi0xLjQKJ...', size: 120 * 1024 }
   },
    {
     id: '5',
     title: 'Code of Conduct',
     description: 'Our principles for ethical behavior and professional conduct.',
-    link: '#',
+    link: '#', // Can be internal if text is provided
     category: 'Company Policies',
-    iconName: 'FileText', // Changed
+    iconName: 'FileText',
     dataAiHint: 'ethics conduct',
+    internalText: 'All employees are expected to adhere to the highest standards of professional conduct...',
   },
   {
     id: '6',
-    title: 'Vacation Request Form',
-    description: 'Submit your time-off requests here.',
-    link: '#',
+    title: 'Vacation Request Form (External)',
+    description: 'Submit your time-off requests here using the external portal.',
+    link: 'https://example.com/vacation-request', // Clearly an external link
     category: 'Benefits',
-    iconName: 'ExternalLink', // Changed
+    iconName: 'ExternalLink',
     dataAiHint: 'travel vacation',
   },
 ];
