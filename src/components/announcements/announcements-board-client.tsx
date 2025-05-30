@@ -1,10 +1,22 @@
+
 "use client";
 
 import type { Announcement } from '@/lib/placeholder-data';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CalendarDays, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { CalendarDays, User, PlusCircle, UploadCloud } from 'lucide-react';
 import { format } from 'date-fns';
+import React, { useState } from 'react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AnnouncementCardProps {
   announcement: Announcement;
@@ -46,17 +58,196 @@ function AnnouncementCard({ announcement }: AnnouncementCardProps) {
   );
 }
 
+const announcementFormSchema = z.object({
+  title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100),
+  content: z.string().min(10, { message: "Content must be at least 10 characters." }).max(2000),
+  author: z.string().min(2, { message: "Author name is required." }).max(50),
+  imageFile: z.custom<FileList>().optional(), // For file input
+  imageDataUrl: z.string().optional(), // To store the data URI
+  dataAiHint: z.string().max(50).optional(),
+});
+
+type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
+
 
 interface AnnouncementsBoardClientProps {
   initialAnnouncements: Announcement[];
 }
 
 export function AnnouncementsBoardClient({ initialAnnouncements }: AnnouncementsBoardClientProps) {
+  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const form = useForm<AnnouncementFormValues>({
+    resolver: zodResolver(announcementFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      author: "",
+      imageDataUrl: "",
+      dataAiHint: "",
+    },
+  });
+
+  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUri = reader.result as string;
+        setImagePreview(dataUri);
+        form.setValue('imageDataUrl', dataUri, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+      form.setValue('imageDataUrl', '', { shouldValidate: true });
+    }
+  };
+
+  const onSubmit: SubmitHandler<AnnouncementFormValues> = (data) => {
+    const newAnnouncement: Announcement = {
+      id: Date.now().toString(),
+      title: data.title,
+      content: data.content,
+      author: data.author,
+      date: new Date().toISOString(),
+      imageUrl: data.imageDataUrl,
+      dataAiHint: data.imageDataUrl ? data.dataAiHint : undefined,
+    };
+
+    setAnnouncements(prevAnnouncements => [newAnnouncement, ...prevAnnouncements]);
+    toast({
+      title: "Announcement Created",
+      description: `"${data.title}" has been successfully posted.`,
+    });
+    setIsDialogOpen(false);
+    form.reset();
+    setImagePreview(null);
+  };
+  
   // Sort announcements by date, newest first
-  const sortedAnnouncements = [...initialAnnouncements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedAnnouncements = [...announcements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Announcement
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Create New Announcement</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter announcement title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Content</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter announcement details" rows={5} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="author"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter author's name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="imageFile" // This controls the file input but we save imageDataUrl
+                  render={({ field: { onChange, value, ...restField } }) => ( // Destructure onChange from field
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <UploadCloud className="mr-2 h-4 w-4 text-muted-foreground" />
+                        Optional Image
+                      </FormLabel>
+                       {imagePreview && (
+                        <div className="mt-2 mb-2 relative w-full aspect-[2/1] rounded-md overflow-hidden border">
+                          <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="contain" />
+                        </div>
+                      )}
+                      <FormControl>
+                         <Input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            handleImageFileChange(e); // handles preview and imageDataUrl
+                            onChange(e.target.files); // RHF needs this for its own tracking
+                          }}
+                          {...restField}
+                          className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch('imageDataUrl') && (
+                  <FormField
+                    control={form.control}
+                    name="dataAiHint"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>AI Hint for Image (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 'team meeting' or 'product launch'" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Saving..." : "Save Announcement"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       {sortedAnnouncements.length > 0 ? (
         sortedAnnouncements.map((announcement) => (
           <AnnouncementCard key={announcement.id} announcement={announcement} />
@@ -67,3 +258,4 @@ export function AnnouncementsBoardClient({ initialAnnouncements }: Announcements
     </div>
   );
 }
+
