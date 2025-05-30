@@ -1,9 +1,19 @@
 
+"use client";
+
 import type { Resource } from '@/lib/placeholder-data';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ExternalLink } from 'lucide-react';
-import { useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { ExternalLink, PlusCircle, FolderPlus } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResourceCardProps {
   resource: Resource;
@@ -38,12 +48,53 @@ function ResourceCard({ resource }: ResourceCardProps) {
   );
 }
 
+const newCategoryFormSchema = z.object({
+  categoryName: z.string().min(1, "Category name is required.").max(50, "Category name must be 50 characters or less."),
+});
+type NewCategoryFormValues = z.infer<typeof newCategoryFormSchema>;
+
 interface ResourceHubClientProps {
   initialResources: Resource[];
 }
 
 export function ResourceHubClient({ initialResources }: ResourceHubClientProps) {
-  const categorizedResources = useMemo(() => {
+  const { toast } = useToast();
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+
+  const initialDerivedCategories = useMemo(() => {
+    const categoriesSet = new Set(initialResources.map(r => r.category || 'Other'));
+    return Array.from(categoriesSet);
+  }, [initialResources]);
+
+  const [allCategories, setAllCategories] = useState<string[]>(initialDerivedCategories);
+
+  const categoryForm = useForm<NewCategoryFormValues>({
+    resolver: zodResolver(newCategoryFormSchema),
+    defaultValues: {
+      categoryName: "",
+    },
+  });
+
+  const handleAddCategory: SubmitHandler<NewCategoryFormValues> = (data) => {
+    const newCategoryName = data.categoryName.trim();
+    if (newCategoryName && !allCategories.some(cat => cat.toLowerCase() === newCategoryName.toLowerCase())) {
+      setAllCategories(prev => [...prev, newCategoryName]);
+      toast({
+        title: "Category Added",
+        description: `Category "${newCategoryName}" has been successfully added.`,
+      });
+    } else if (allCategories.some(cat => cat.toLowerCase() === newCategoryName.toLowerCase())) {
+      toast({
+        title: "Category Exists",
+        description: `Category "${newCategoryName}" already exists.`,
+        variant: "destructive",
+      });
+    }
+    setIsCategoryDialogOpen(false);
+    categoryForm.reset();
+  };
+
+  const displayCategorizedResources = useMemo(() => {
     return initialResources.reduce((acc, resource) => {
       const category = resource.category || 'Other';
       if (!acc[category]) {
@@ -54,23 +105,79 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
     }, {} as Record<string, Resource[]>);
   }, [initialResources]);
 
-  const categories = Object.keys(categorizedResources).sort();
+  const sortedDisplayCategories = useMemo(() => {
+    const uniqueCategories = new Set(allCategories); // Ensures uniqueness if somehow duplicates are added
+    return Array.from(uniqueCategories).sort((a, b) => a.localeCompare(b));
+  }, [allCategories]);
+
 
   return (
     <div className="space-y-8">
-      {categories.length > 0 ? (
-        categories.map((category) => (
-          <section key={category}>
-            <h2 className="text-2xl font-semibold mb-4 pb-2 border-b border-border">{category}</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {categorizedResources[category].map((resource) => (
-                <ResourceCard key={resource.id} resource={resource} />
-              ))}
-            </div>
-          </section>
-        ))
+      <div className="flex justify-end">
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <FolderPlus className="mr-2 h-4 w-4" />
+              Add New Category
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Resource Category</DialogTitle>
+            </DialogHeader>
+            <Form {...categoryForm}>
+              <form onSubmit={categoryForm.handleSubmit(handleAddCategory)} className="space-y-4 py-4">
+                <FormField
+                  control={categoryForm.control}
+                  name="categoryName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Training Materials" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button type="submit">Save Category</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {sortedDisplayCategories.length > 0 ? (
+        sortedDisplayCategories.map((category) => {
+          const resourcesForCategory = displayCategorizedResources[category] || [];
+          return (
+            <section key={category}>
+              <h2 className="text-2xl font-semibold mb-4 pb-2 border-b border-border">{category}</h2>
+              {resourcesForCategory.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {resourcesForCategory.map((resource) => (
+                    <ResourceCard key={resource.id} resource={resource} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
+                  <p className="text-muted-foreground">No resources in this category yet.</p>
+                </div>
+              )}
+            </section>
+          );
+        })
       ) : (
-        <p className="text-center text-muted-foreground py-8">No resources available at this time.</p>
+        <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
+           <p className="text-center text-muted-foreground py-8">
+            No resource categories available. Add a category to get started.
+          </p>
+        </div>
       )}
     </div>
   );
