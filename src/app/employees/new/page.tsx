@@ -6,7 +6,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Image from 'next/image';
 
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, UploadCloud, UserCircle, Paperclip, FileText } from "lucide-react";
-import { employees as existingEmployeesForSelection } from '@/lib/placeholder-data'; 
 import type { Attachment } from '@/lib/placeholder-data';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useEmployees } from "@/contexts/employee-context";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +47,7 @@ const attachmentSchema = z.object({
 const newEmployeeFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   position: z.string().min(2, { message: "Position must be at least 2 characters." }).max(100),
-  department: z.string().min(2, { message: "Department is required." }).max(100),
+  department: z.string().min(1, { message: "Department is required." }).max(100),
   idNumber: z.string().min(1, { message: "ID number is required." }).max(50),
   email: z.string().email({ message: "Invalid email address." }).min(5).max(100),
   officeLocation: z.string().max(100).optional(),
@@ -60,7 +60,7 @@ const newEmployeeFormSchema = z.object({
     required_error: "Hiring date is required.",
   }),
   hiredBy: z.string().max(100).optional(),
-  avatarDataUrl: z.string().optional(), // For storing image as data URI
+  avatarDataUrl: z.string().optional(), 
   attachments: z.array(attachmentSchema).optional().default([]),
 });
 
@@ -68,7 +68,7 @@ export type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
 
 export default function NewEmployeePage() {
   const router = useRouter();
-  const { addEmployee } = useEmployees();
+  const { employees: existingEmployeesForSelection, addEmployee } = useEmployees();
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -123,14 +123,19 @@ export default function NewEmployeePage() {
     return selectedIds
       .map(id => existingEmployeesForSelection.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
-  }, [form.watch('reportsTo')]);
+  }, [form.watch('reportsTo'), existingEmployeesForSelection]);
 
   const selectedDirectReportsNames = React.useMemo(() => {
     const selectedIds = form.watch('directReports') || [];
     return selectedIds
       .map(id => existingEmployeesForSelection.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
-  }, [form.watch('directReports')]);
+  }, [form.watch('directReports'), existingEmployeesForSelection]);
+
+  const uniqueDepartments = useMemo(() => {
+    const departments = new Set(existingEmployeesForSelection.map(emp => emp.department).filter(Boolean));
+    return Array.from(departments).sort();
+  }, [existingEmployeesForSelection]);
 
   return (
     <>
@@ -215,9 +220,20 @@ export default function NewEmployeePage() {
                         <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
                         Department
                       </FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Engineering" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a department" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {uniqueDepartments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -501,3 +517,5 @@ export default function NewEmployeePage() {
     </>
   );
 }
+
+    
