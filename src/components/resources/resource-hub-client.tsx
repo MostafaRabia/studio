@@ -3,41 +3,55 @@
 
 import type { Resource } from '@/lib/placeholder-data';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon } from 'lucide-react'; // Added more icons
-import React, { useMemo, useState } from 'react';
+import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-// Helper function to get the icon component based on name
+const iconOptions = [
+  { value: 'FileText', label: 'File Text' },
+  { value: 'ExternalLink', label: 'External Link' },
+  { value: 'ShieldCheck', label: 'Shield Check' },
+  { value: 'Handshake', label: 'Handshake' },
+  { value: 'BookOpen', label: 'Book Open' },
+  { value: 'Link', label: 'Link Icon' },
+  { value: 'Folder', label: 'Folder Icon' },
+  { value: 'Info', label: 'Info Icon' },
+];
+
 const getIconComponent = (iconName?: string): LucideIcon => {
-  if (!iconName) return ExternalLink; // Default icon
+  if (!iconName) return ExternalLink;
   switch (iconName) {
-    case 'FileText':
-      return FileText;
-    case 'ShieldCheck':
-      return ShieldCheck;
-    case 'ExternalLink':
-      return ExternalLink;
-    case 'Handshake':
-      return Handshake;
-    // Add other icons used in your resources here
-    default:
-      return ExternalLink; // Fallback icon
+    case 'FileText': return FileText;
+    case 'ShieldCheck': return ShieldCheck;
+    case 'ExternalLink': return ExternalLink;
+    case 'Handshake': return Handshake;
+    case 'BookOpen': return BookOpen;
+    case 'Link': return Link;
+    case 'Folder': return Folder;
+    case 'Info': return Info;
+    default: return ExternalLink;
   }
 };
 
 interface ResourceCardProps {
   resource: Resource;
+  onEdit: (resource: Resource) => void;
+  onRemove: (resourceId: string) => void;
 }
 
-function ResourceCard({ resource }: ResourceCardProps) {
+function ResourceCard({ resource, onEdit, onRemove }: ResourceCardProps) {
   const IconComponent = getIconComponent(resource.iconName);
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
@@ -54,7 +68,7 @@ function ResourceCard({ resource }: ResourceCardProps) {
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col justify-end">
+      <CardContent className="flex-grow">
         <Link href={resource.link} target="_blank" rel="noopener noreferrer" className="mt-auto">
           <span className="inline-flex items-center text-sm font-medium text-primary hover:underline group">
             Access Resource
@@ -62,6 +76,16 @@ function ResourceCard({ resource }: ResourceCardProps) {
           </span>
         </Link>
       </CardContent>
+      <CardFooter className="pt-4 border-t mt-auto">
+        <div className="flex justify-end gap-2 w-full">
+          <Button variant="outline" size="sm" onClick={() => onEdit(resource)}>
+            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => onRemove(resource.id)}>
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
@@ -71,6 +95,17 @@ const newCategoryFormSchema = z.object({
 });
 type NewCategoryFormValues = z.infer<typeof newCategoryFormSchema>;
 
+const resourceFormSchema = z.object({
+  id: z.string().optional(), // Only present for editing
+  title: z.string().min(3, "Title must be at least 3 characters.").max(100),
+  description: z.string().max(200).optional(),
+  link: z.string().url("Please enter a valid URL."),
+  category: z.string().min(1, "Category is required."),
+  iconName: z.string().min(1, "Icon is required."),
+});
+export type ResourceFormValues = z.infer<typeof resourceFormSchema>;
+
+
 interface ResourceHubClientProps {
   initialResources: Resource[];
 }
@@ -78,42 +113,100 @@ interface ResourceHubClientProps {
 export function ResourceHubClient({ initialResources }: ResourceHubClientProps) {
   const { toast } = useToast();
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [resources, setResources] = useState<Resource[]>(initialResources);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [isResourceFormOpen, setIsResourceFormOpen] = useState(false);
+  const [resourceToRemove, setResourceToRemove] = useState<string | null>(null);
 
-  const initialDerivedCategories = useMemo(() => {
-    const categoriesSet = new Set(initialResources.map(r => r.category || 'Other'));
+  const derivedCategories = useMemo(() => {
+    const categoriesSet = new Set(resources.map(r => r.category || 'Other'));
     return Array.from(categoriesSet);
-  }, [initialResources]);
+  }, [resources]);
 
-  const [allCategories, setAllCategories] = useState<string[]>(initialDerivedCategories);
+  const [allCategories, setAllCategories] = useState<string[]>(derivedCategories);
+
+  useEffect(() => {
+    const newDerivedCategories = Array.from(new Set(resources.map(r => r.category || 'Other')));
+    setAllCategories(newDerivedCategories);
+  }, [resources]);
+
 
   const categoryForm = useForm<NewCategoryFormValues>({
     resolver: zodResolver(newCategoryFormSchema),
+    defaultValues: { categoryName: "" },
+  });
+
+  const resourceForm = useForm<ResourceFormValues>({
+    resolver: zodResolver(resourceFormSchema),
     defaultValues: {
-      categoryName: "",
+      title: "",
+      description: "",
+      link: "",
+      category: "",
+      iconName: "ExternalLink",
     },
   });
 
   const handleAddCategory: SubmitHandler<NewCategoryFormValues> = (data) => {
     const newCategoryName = data.categoryName.trim();
     if (newCategoryName && !allCategories.some(cat => cat.toLowerCase() === newCategoryName.toLowerCase())) {
-      setAllCategories(prev => [...prev, newCategoryName]);
-      toast({
-        title: "Category Added",
-        description: `Category "${newCategoryName}" has been successfully added.`,
-      });
+      setAllCategories(prev => [...prev, newCategoryName].sort((a, b) => a.localeCompare(b)));
+      toast({ title: "Category Added", description: `Category "${newCategoryName}" has been successfully added.` });
     } else if (allCategories.some(cat => cat.toLowerCase() === newCategoryName.toLowerCase())) {
-      toast({
-        title: "Category Exists",
-        description: `Category "${newCategoryName}" already exists.`,
-        variant: "destructive",
-      });
+      toast({ title: "Category Exists", description: `Category "${newCategoryName}" already exists.`, variant: "destructive" });
     }
     setIsCategoryDialogOpen(false);
     categoryForm.reset();
   };
+  
+  const handleOpenEditResourceDialog = (resource: Resource) => {
+    setEditingResource(resource);
+    resourceForm.reset({
+      id: resource.id,
+      title: resource.title,
+      description: resource.description || "",
+      link: resource.link,
+      category: resource.category,
+      iconName: resource.iconName,
+    });
+    setIsResourceFormOpen(true);
+  };
+
+  const handleResourceFormSubmit: SubmitHandler<ResourceFormValues> = (data) => {
+    if (editingResource) { // Editing existing resource
+      setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...data, id: editingResource.id } : r));
+      toast({ title: "Resource Updated", description: `"${data.title}" has been updated.` });
+    } else {
+      // Add new resource logic (placeholder for now, can be expanded)
+      const newResource: Resource = {
+        id: Date.now().toString(),
+        ...data,
+        description: data.description || "", // ensure description is string
+      };
+      setResources(prev => [newResource, ...prev]);
+      toast({ title: "Resource Added", description: `"${data.title}" has been added.` });
+    }
+    setIsResourceFormOpen(false);
+    setEditingResource(null);
+    resourceForm.reset();
+  };
+
+  const handleOpenRemoveResourceDialog = (resourceId: string) => {
+    setResourceToRemove(resourceId);
+  };
+
+  const confirmRemoveResource = () => {
+    if (resourceToRemove) {
+      const resourceBeingRemoved = resources.find(r => r.id === resourceToRemove);
+      setResources(prev => prev.filter(r => r.id !== resourceToRemove));
+      toast({ title: "Resource Removed", description: `"${resourceBeingRemoved?.title}" has been removed.`, variant: "destructive" });
+      setResourceToRemove(null);
+    }
+  };
+
 
   const displayCategorizedResources = useMemo(() => {
-    return initialResources.reduce((acc, resource) => {
+    return resources.reduce((acc, resource) => {
       const category = resource.category || 'Other';
       if (!acc[category]) {
         acc[category] = [];
@@ -121,22 +214,27 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       acc[category].push(resource);
       return acc;
     }, {} as Record<string, Resource[]>);
-  }, [initialResources]);
+  }, [resources]);
 
   const sortedDisplayCategories = useMemo(() => {
-    const uniqueCategories = new Set(allCategories); // Ensures uniqueness if somehow duplicates are added
-    return Array.from(uniqueCategories).sort((a, b) => a.localeCompare(b));
+    return [...allCategories].sort((a, b) => a.localeCompare(b));
   }, [allCategories]);
 
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => {
+          setEditingResource(null);
+          resourceForm.reset({ title: "", description: "", link: "", category: "", iconName: "ExternalLink" });
+          setIsResourceFormOpen(true);
+        }}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Add New Resource
+        </Button>
         <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <FolderPlus className="mr-2 h-4 w-4" />
-              Add New Category
+            <Button variant="outline">
+              <FolderPlus className="mr-2 h-4 w-4" /> Add New Category
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
@@ -159,9 +257,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
                   )}
                 />
                 <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
-                  </DialogClose>
+                  <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
                   <Button type="submit">Save Category</Button>
                 </DialogFooter>
               </form>
@@ -169,6 +265,94 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit/Add Resource Dialog */}
+      <Dialog open={isResourceFormOpen} onOpenChange={(isOpen) => {
+        setIsResourceFormOpen(isOpen);
+        if (!isOpen) {
+          setEditingResource(null);
+          resourceForm.reset();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingResource ? "Edit Resource" : "Add New Resource"}</DialogTitle>
+          </DialogHeader>
+          <Form {...resourceForm}>
+            <form onSubmit={resourceForm.handleSubmit(handleResourceFormSubmit)} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
+              <FormField control={resourceForm.control} name="title" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl><Input placeholder="Resource Title" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}/>
+              <FormField control={resourceForm.control} name="description" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormControl><Textarea placeholder="Brief description of the resource" {...field} value={field.value || ''} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}/>
+              <FormField control={resourceForm.control} name="link" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link URL</FormLabel>
+                  <FormControl><Input type="url" placeholder="https://example.com/resource" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}/>
+              <FormField control={resourceForm.control} name="category" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {sortedDisplayCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}/>
+              <FormField control={resourceForm.control} name="iconName" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Icon</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select an icon" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {iconOptions.map(icon => <SelectItem key={icon.value} value={icon.value}>{icon.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}/>
+              <DialogFooter className="pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsResourceFormOpen(false)}>Cancel</Button>
+                <Button type="submit">{editingResource ? "Save Changes" : "Add Resource"}</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Resource Confirmation Dialog */}
+      <AlertDialog open={!!resourceToRemove} onOpenChange={(isOpen) => !isOpen && setResourceToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the resource
+              "{resources.find(r => r.id === resourceToRemove)?.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setResourceToRemove(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveResource} className={buttonVariants({ variant: "destructive" })}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {sortedDisplayCategories.length > 0 ? (
         sortedDisplayCategories.map((category) => {
@@ -179,7 +363,12 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
               {resourcesForCategory.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {resourcesForCategory.map((resource) => (
-                    <ResourceCard key={resource.id} resource={resource} />
+                    <ResourceCard 
+                      key={resource.id} 
+                      resource={resource} 
+                      onEdit={handleOpenEditResourceDialog}
+                      onRemove={handleOpenRemoveResourceDialog}
+                    />
                   ))}
                 </div>
               ) : (
@@ -193,10 +382,12 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       ) : (
         <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
            <p className="text-center text-muted-foreground py-8">
-            No resource categories available. Add a category to get started.
+            No resource categories or resources available. Add a category and resources to get started.
           </p>
         </div>
       )}
     </div>
   );
 }
+
+    
