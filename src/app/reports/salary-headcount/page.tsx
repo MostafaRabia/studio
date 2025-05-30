@@ -147,7 +147,7 @@ export default function SalaryHeadcountReportPage() {
                     dot={{
                       r: 4,
                       fill: "var(--color-averageSalary)",
-                      strokeWidth: 2,
+                      // strokeWidth: 0, // Removed strokeWidth for a cleaner dot
                     }}
                     name="Average Salary"
                   />
