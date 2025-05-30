@@ -4,7 +4,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { resources as allPlaceholderResources } from '@/lib/placeholder-data';
-import type { Resource, Employee } from '@/lib/placeholder-data';
+import type { Resource, Employee, Attachment } from '@/lib/placeholder-data';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -129,6 +129,14 @@ export default function ResourceDetailPage() {
         description={resource.description || "Details for this resource."}
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
+            {resource.id === '7' && (
+                <Link href="/configurator" passHref>
+                    <Button variant="outline">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Configurator
+                    </Button>
+                </Link>
+            )}
             {resource.id !== '7' && ( 
               <Link href={`/resources?edit=${resource.id}`} passHref>
                 <Button variant="outline">
