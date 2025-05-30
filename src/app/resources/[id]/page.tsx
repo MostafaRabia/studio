@@ -10,10 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, ExternalLink, FileText, Download, Edit, Trash2, Settings } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEmployees } from '@/contexts/employee-context';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
+
+interface EmployeeRuleSettings {
+  experimentalFeaturesEnabled: boolean;
+  // Add more rule settings here as needed
+}
 
 export default function ResourceDetailPage() {
   const router = useRouter();
@@ -25,6 +32,29 @@ export default function ResourceDetailPage() {
   const { employees } = useEmployees();
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+
+  const [employeeRuleSettings, setEmployeeRuleSettings] = useState<Record<string, EmployeeRuleSettings>>({});
+
+  useEffect(() => {
+    if (selectedEmployeeId && !employeeRuleSettings[selectedEmployeeId]) {
+      setEmployeeRuleSettings(prevSettings => ({
+        ...prevSettings,
+        [selectedEmployeeId]: {
+          experimentalFeaturesEnabled: false, // Default value
+        }
+      }));
+    }
+  }, [selectedEmployeeId, employeeRuleSettings]);
+
+  const handleRuleChange = (employeeId: string, ruleName: keyof EmployeeRuleSettings, value: boolean) => {
+    setEmployeeRuleSettings(prevSettings => ({
+      ...prevSettings,
+      [employeeId]: {
+        ...(prevSettings[employeeId] || { experimentalFeaturesEnabled: false }), // Ensure existing settings are kept
+        [ruleName]: value,
+      }
+    }));
+  };
 
 
   if (!resource) {
@@ -73,7 +103,6 @@ export default function ResourceDetailPage() {
         }
       />
 
-      {/* Employee specific rule configuration section - MOVED TO TOP */}
       {resource.id === '7' && (
         <Card className="mb-6 shadow-lg">
           <CardHeader>
@@ -98,19 +127,43 @@ export default function ResourceDetailPage() {
                 ))}
               </SelectContent>
             </Select>
+            
             {selectedEmployee && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Configuring rules for: <span className="font-medium text-primary">{selectedEmployee.name}</span>
-              </p>
+              <div className="mt-4 space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Configuring rules for: <span className="font-medium text-primary">{selectedEmployee.name}</span>
+                </p>
+                
+                <div className="flex items-center space-x-2 p-3 border rounded-md bg-muted/20">
+                  <Switch
+                    id={`experimental-features-${selectedEmployee.id}`}
+                    checked={employeeRuleSettings[selectedEmployee.id]?.experimentalFeaturesEnabled || false}
+                    onCheckedChange={(value) => handleRuleChange(selectedEmployee.id, 'experimentalFeaturesEnabled', value)}
+                  />
+                  <Label htmlFor={`experimental-features-${selectedEmployee.id}`} className="text-sm">
+                    Enable Experimental Features
+                  </Label>
+                </div>
+
+                <div className="mt-4 flex items-center justify-center h-20 border-2 border-dashed rounded-md">
+                  <p className="text-muted-foreground text-center text-sm px-4">
+                    {employeeRuleSettings[selectedEmployee.id]?.experimentalFeaturesEnabled 
+                      ? `${selectedEmployee.name} has experimental features ENABLED.`
+                      : `${selectedEmployee.name} has experimental features DISABLED.`
+                    }
+                    <br/>
+                    More rule configurations specific to {selectedEmployee.name} would appear here.
+                  </p>
+                </div>
+              </div>
             )}
-            <div className="mt-4 flex items-center justify-center h-20 border-2 border-dashed rounded-md">
-              <p className="text-muted-foreground text-center">
-                {selectedEmployee ?
-                  `Rule configurations specific to ${selectedEmployee.name} would appear here.` :
-                  "Select an employee to see specific rule configurations."
-                }
-              </p>
-            </div>
+            {!selectedEmployee && resource.id === '7' && (
+              <div className="mt-4 flex items-center justify-center h-20 border-2 border-dashed rounded-md">
+                <p className="text-muted-foreground text-center">
+                  Select an employee to see specific rule configurations.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
