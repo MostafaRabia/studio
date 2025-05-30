@@ -235,7 +235,7 @@ export const resources: Resource[] = [
     category: 'Company Policies',
     iconName: 'FileText',
     dataAiHint: 'rules regulations',
-    internalText: '## General Employee Rules\n\n1.  **Attendance:** Employees are expected to be punctual and adhere to their scheduled work hours.\n2.  **Dress Code:** Maintain a professional appearance appropriate for your role and work environment.\n3.  **Use of Company Property:** Company equipment and resources are to be used for business purposes. Personal use should be minimal and not interfere with work duties.\n4.  **Confidentiality:** Protect sensitive company and client information at all times.\n5.  **Workplace Conduct:** Treat all colleagues, clients, and visitors with respect and professionalism. Harassment or discrimination will not be tolerated.\n\n*This is a summary. Please refer to the full Employee Handbook for comprehensive details.*',
+    internalText: '', // Content removed as per request
   },
 ];
 
