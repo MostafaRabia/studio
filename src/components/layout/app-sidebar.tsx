@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -16,7 +15,7 @@ import {
 import { AppLogo } from "./app-logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, Users as UsersIcon, Bell, Plane, DollarSign, ClipboardList, MessageSquare, SlidersHorizontal } from "lucide-react"; // Added SlidersHorizontal
+import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, Users as UsersIcon, Bell, Plane, DollarSign, ClipboardList, MessageSquare, SlidersHorizontal, LineChart as LineChartIcon } from "lucide-react"; // Added LineChartIcon
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -28,6 +27,7 @@ const menuItems = [
   { href: "/vacations", label: "Vacations", icon: Plane },
   { href: "/salaries", label: "Salaries", icon: DollarSign },
   { href: "/hiring", label: "Hiring", icon: ClipboardList },
+  { href: "/reports/salary-headcount", label: "Salary Report", icon: LineChartIcon }, // New Report Link
   { href: "/configurator", label: "Configurator", icon: SlidersHorizontal },
 ];
 
