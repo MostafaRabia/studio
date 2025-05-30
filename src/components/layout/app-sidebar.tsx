@@ -16,18 +16,19 @@ import {
 import { AppLogo } from "./app-logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork, Bell, Plane, DollarSign, ClipboardList, MessageSquare } from "lucide-react"; // Added MessageSquare
+import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, Users as UsersIcon, Bell, Plane, DollarSign, ClipboardList, MessageSquare, SlidersHorizontal } from "lucide-react"; // Added SlidersHorizontal
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/employees", label: "Employees", icon: Users },
-  { href: "/employees/hierarchy", label: "Hierarchy", icon: Users }, // Changed GitFork to Users for consistency
+  { href: "/employees/hierarchy", label: "Hierarchy", icon: UsersIcon },
   { href: "/announcements", label: "Announcements", icon: Megaphone },
   { href: "/faq", label: "AI FAQ", icon: HelpCircle },
   { href: "/resources", label: "Resources", icon: Library },
   { href: "/vacations", label: "Vacations", icon: Plane },
   { href: "/salaries", label: "Salaries", icon: DollarSign },
   { href: "/hiring", label: "Hiring", icon: ClipboardList },
+  { href: "/configurator", label: "Configurator", icon: SlidersHorizontal },
 ];
 
 interface AppSidebarProps {
