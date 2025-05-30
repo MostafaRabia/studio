@@ -38,7 +38,23 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
       hiredBy: employeeData.hiredBy,
       attachments: employeeData.attachments || [],
     };
-    setEmployees((prevEmployees) => [newEmployee, ...prevEmployees]);
+    setEmployees((prevEmployees) => {
+      const updatedEmployees = [newEmployee, ...prevEmployees];
+      
+      // Simulate sending email notifications to managers
+      if (newEmployee.reportsTo && newEmployee.reportsTo.length > 0) {
+        console.log(`Simulating notifications for new employee: ${newEmployee.name}`);
+        newEmployee.reportsTo.forEach(managerId => {
+          const manager = updatedEmployees.find(emp => emp.id === managerId); // Check against updatedEmployees to include self if manager is the new employee somehow (edge case)
+          if (manager) {
+            console.log(`--> Would send email notification to manager: ${manager.name} (${manager.email}) about new team member ${newEmployee.name}.`);
+          } else {
+            console.log(`--> Could not find manager with ID: ${managerId} to notify about new team member ${newEmployee.name}.`);
+          }
+        });
+      }
+      return updatedEmployees;
+    });
   };
 
   const updateEmployee = (id: string, employeeData: NewEmployeeFormValues) => {
