@@ -35,7 +35,8 @@ export default function ResourceDetailPage() {
 
   const hasInternalText = resource.internalText && resource.internalText.trim() !== '';
   const hasTextAttachment = !!resource.textAttachment;
-  const hasExternalLink = !!resource.link;
+  const hasExternalLink = !!resource.link && resource.link.trim() !== '';
+
 
   return (
     <>
@@ -50,13 +51,14 @@ export default function ResourceDetailPage() {
                 Edit Resource
               </Button>
             </Link>
-            <Link href={`/resources?delete=${resource.id}`} passHref>
-              <Button variant="destructive" className="bg-destructive hover:bg-destructive/90">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Resource
-              </Button>
-            </Link>
-            {/* "Back to Resource Hub" button removed from here */}
+            {resource.id !== '7' && ( // Conditionally render Delete button
+              <Link href={`/resources?delete=${resource.id}`} passHref>
+                <Button variant="destructive" className="bg-destructive hover:bg-destructive/90">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Resource
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />
