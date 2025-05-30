@@ -28,9 +28,11 @@ import * as z from 'zod';
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEmployees } from '@/contexts/employee-context'; // Import useEmployees
 
 const hiringRequestFormSchema = z.object({
-  hiringManagerName: z.string().min(2, { message: "Hiring manager name must be at least 2 characters." }).max(100),
+  hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }), // Changed min to 1 as it's a selection
   department: z.string().min(2, { message: "Department is required." }).max(100),
   positionName: z.string().min(3, { message: "Position name must be at least 3 characters." }).max(100),
   startingDate: z.date({
@@ -46,6 +48,7 @@ export default function HiringPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
   const { toast } = useToast();
+  const { employees } = useEmployees(); // Get employees from context
 
   const form = useForm<HiringRequestFormValues>({
     resolver: zodResolver(hiringRequestFormSchema),
@@ -62,7 +65,7 @@ export default function HiringPage() {
     console.log("New Hiring Request Data:", data);
     toast({
       title: "Hiring Request Submitted",
-      description: `Request for ${data.positionName} has been submitted.`,
+      description: `Request for ${data.positionName} by ${data.hiringManagerName} has been submitted.`,
     });
     setIsDialogOpen(false); // Close the dialog
     form.reset(); // Reset form fields
@@ -97,9 +100,20 @@ export default function HiringPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Hiring Manager Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Jane Doe" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a hiring manager" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {employees.map((employee) => (
+                                <SelectItem key={employee.id} value={employee.name}>
+                                  {employee.name} ({employee.jobTitle})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -223,3 +237,4 @@ export default function HiringPage() {
     </>
   );
 }
+
