@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEmployees } from '@/contexts/employee-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { Employee } from '@/lib/placeholder-data';
 
 const hiringRequestFormSchema = z.object({
   hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }),
@@ -98,6 +99,32 @@ export default function HiringPage() {
       title: "Hiring Request Submitted",
       description: `Request for ${data.positionName} by ${data.hiringManagerName} has been submitted.`,
     });
+
+    // Simulate notifications
+    const hiringManager = employees.find(emp => emp.name === data.hiringManagerName);
+    if (hiringManager && hiringManager.email) {
+      console.log(`SIMULATE: Email notification sent to Hiring Manager: ${hiringManager.name} (${hiringManager.email}) about new hiring request for ${data.positionName}.`);
+      console.log(`SIMULATE: In-app notification created for Hiring Manager: ${hiringManager.name} about new hiring request for ${data.positionName}.`);
+    } else if (hiringManager) {
+      console.log(`SIMULATE: Hiring Manager ${hiringManager.name} found, but no email address available for notification.`);
+    } else {
+      console.log(`SIMULATE: Hiring Manager "${data.hiringManagerName}" not found in the system for notification.`);
+    }
+
+    let hrContact: Employee | undefined = employees.find(emp => emp.id === '5' && emp.department === 'Human Resources'); // Prefer Eve Harrington
+    if (!hrContact) {
+        hrContact = employees.find(emp => emp.department === 'Human Resources');
+    }
+
+    if (hrContact && hrContact.email) {
+        console.log(`SIMULATE: Email notification sent to HR Representative for ${data.department}: ${hrContact.name} (${hrContact.email}) about new hiring request for ${data.positionName}.`);
+        console.log(`SIMULATE: In-app notification created for HR Representative: ${hrContact.name} about new hiring request for ${data.positionName} in ${data.department}.`);
+    } else if (hrContact) {
+        console.log(`SIMULATE: HR Representative for ${data.department} (${hrContact.name}) found, but no email address available for notification.`);
+    } else {
+        console.log(`SIMULATE: No HR Representative found for ${data.department} to notify about new hiring request for ${data.positionName}.`);
+    }
+    
     setIsDialogOpen(false);
     form.reset();
   };
@@ -109,7 +136,10 @@ export default function HiringPage() {
         description="Manage job openings, candidates, and the hiring process."
         actions={
           <div className="flex gap-2">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) form.reset(); // Reset form if dialog is closed without submitting
+            }}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
