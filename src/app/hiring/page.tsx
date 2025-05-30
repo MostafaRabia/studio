@@ -3,7 +3,7 @@
 
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, PlusCircle, CalendarIcon, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import {
   Dialog,
@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,6 +32,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEmployees } from '@/contexts/employee-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Employee } from '@/lib/placeholder-data';
+import { Card, CardContent, CardHeader, CardTitle as TableCardTitle } from '@/components/ui/card'; // Renamed CardTitle to avoid conflict
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
 
 const hiringRequestFormSchema = z.object({
   hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }),
@@ -41,12 +53,26 @@ const hiringRequestFormSchema = z.object({
     required_error: "Starting date is required.",
   }),
   qualificationsRequested: z.string().min(10, { message: "Qualifications must be at least 10 characters." }).max(1000),
-  countryOfHiring: z.string().min(2, { message: "Country of hiring is required." }).max(100), // Increased max length for longer country names
+  countryOfHiring: z.string().min(2, { message: "Country of hiring is required." }).max(100),
 });
 
 type HiringRequestFormValues = z.infer<typeof hiringRequestFormSchema>;
 
-// A comprehensive list of countries
+interface DisplayedHiringRequest {
+  id: string;
+  createdDate: Date;
+  createdBy: string; // Hiring Manager Name
+  positionName: string;
+  department: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  hrResponsible: string;
+  comment: string;
+  // Store other form values if needed for detailed view later
+  startingDate: Date;
+  qualificationsRequested: string;
+  countryOfHiring: string;
+}
+
 const countries = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
   "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
@@ -77,6 +103,23 @@ export default function HiringPage() {
   const { toast } = useToast();
   const { employees } = useEmployees();
 
+  const initialMockRequests: DisplayedHiringRequest[] = [
+    {
+      id: 'HR001', createdDate: new Date('2024-05-01'), createdBy: 'Bob The Builder', positionName: 'Senior Frontend Developer', department: 'Engineering', status: 'Approved', hrResponsible: 'Eve Harrington', comment: 'Approved by management.',
+      startingDate: new Date('2024-06-15'), qualificationsRequested: '5+ years React, TypeScript', countryOfHiring: 'Canada'
+    },
+    {
+      id: 'HR002', createdDate: new Date('2024-05-10'), createdBy: 'Alice Wonderland', positionName: 'UX Designer', department: 'Product', status: 'Pending', hrResponsible: 'Eve Harrington', comment: 'Awaiting final review.',
+      startingDate: new Date('2024-07-01'), qualificationsRequested: 'Portfolio, Figma, User Research', countryOfHiring: 'United States of America'
+    },
+    {
+      id: 'HR003', createdDate: new Date('2024-04-20'), createdBy: 'Carol Danvers', positionName: 'Marketing Intern', department: 'Marketing', status: 'Rejected', hrResponsible: 'Eve Harrington', comment: 'Budget constraints.',
+      startingDate: new Date('2024-05-01'), qualificationsRequested: 'Social media skills, good communication', countryOfHiring: 'United Kingdom'
+    },
+  ];
+  const [hiringRequests, setHiringRequests] = useState<DisplayedHiringRequest[]>(initialMockRequests);
+
+
   const uniqueDepartments = useMemo(() => {
     const departmentsSet = new Set(employees.map(emp => emp.department).filter(Boolean));
     return Array.from(departmentsSet).sort();
@@ -94,14 +137,35 @@ export default function HiringPage() {
   });
 
   const onSubmit: SubmitHandler<HiringRequestFormValues> = (data) => {
-    console.log("New Hiring Request Data:", data);
+    const hiringManager = employees.find(emp => emp.name === data.hiringManagerName);
+    
+    let hrContact: Employee | undefined = employees.find(emp => emp.id === '5' && emp.department === 'Human Resources'); // Prefer Eve Harrington
+    if (!hrContact) {
+        hrContact = employees.find(emp => emp.department === 'Human Resources');
+    }
+    const hrResponsibleName = hrContact ? hrContact.name : "HR (Pending Assignment)";
+
+    const newRequest: DisplayedHiringRequest = {
+      id: `HR${Date.now().toString().slice(-4)}`, // Simple unique ID
+      createdDate: new Date(),
+      createdBy: data.hiringManagerName,
+      positionName: data.positionName,
+      department: data.department,
+      status: 'Pending',
+      hrResponsible: hrResponsibleName,
+      comment: '', // Empty initially
+      startingDate: data.startingDate,
+      qualificationsRequested: data.qualificationsRequested,
+      countryOfHiring: data.countryOfHiring,
+    };
+
+    setHiringRequests(prevRequests => [newRequest, ...prevRequests]);
+
     toast({
       title: "Hiring Request Submitted",
       description: `Request for ${data.positionName} by ${data.hiringManagerName} has been submitted.`,
     });
 
-    // Simulate notifications
-    const hiringManager = employees.find(emp => emp.name === data.hiringManagerName);
     if (hiringManager && hiringManager.email) {
       console.log(`SIMULATE: Email notification sent to Hiring Manager: ${hiringManager.name} (${hiringManager.email}) about new hiring request for ${data.positionName}.`);
       console.log(`SIMULATE: In-app notification created for Hiring Manager: ${hiringManager.name} about new hiring request for ${data.positionName}.`);
@@ -110,17 +174,12 @@ export default function HiringPage() {
     } else {
       console.log(`SIMULATE: Hiring Manager "${data.hiringManagerName}" not found in the system for notification.`);
     }
-
-    let hrContact: Employee | undefined = employees.find(emp => emp.id === '5' && emp.department === 'Human Resources'); // Prefer Eve Harrington
-    if (!hrContact) {
-        hrContact = employees.find(emp => emp.department === 'Human Resources');
-    }
-
+    
     if (hrContact && hrContact.email) {
-        console.log(`SIMULATE: Email notification sent to HR Representative for ${data.department}: ${hrContact.name} (${hrContact.email}) about new hiring request for ${data.positionName}.`);
-        console.log(`SIMULATE: In-app notification created for HR Representative: ${hrContact.name} about new hiring request for ${data.positionName} in ${data.department}.`);
+        console.log(`SIMULATE: Email notification sent to HR Representative ${hrResponsibleName} (${hrContact.email}) about new hiring request for ${data.positionName} in ${data.department}.`);
+        console.log(`SIMULATE: In-app notification created for HR Representative: ${hrResponsibleName} about new hiring request for ${data.positionName} in ${data.department}.`);
     } else if (hrContact) {
-        console.log(`SIMULATE: HR Representative for ${data.department} (${hrContact.name}) found, but no email address available for notification.`);
+        console.log(`SIMULATE: HR Representative ${hrResponsibleName} found, but no email address available for notification.`);
     } else {
         console.log(`SIMULATE: No HR Representative found for ${data.department} to notify about new hiring request for ${data.positionName}.`);
     }
@@ -138,7 +197,7 @@ export default function HiringPage() {
           <div className="flex gap-2">
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
-                if (!open) form.reset(); // Reset form if dialog is closed without submitting
+                if (!open) form.reset(); 
             }}>
               <DialogTrigger asChild>
                 <Button>
@@ -280,7 +339,7 @@ export default function HiringPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <ScrollArea className="h-[200px]"> {/* Makes the country list scrollable */}
+                              <ScrollArea className="h-[200px]"> 
                                 {countries.map((country) => (
                                   <SelectItem key={country} value={country}>
                                     {country}
@@ -316,11 +375,69 @@ export default function HiringPage() {
           </div>
         }
       />
-      <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
-        <p className="text-muted-foreground text-center">
-          Hiring management features will be implemented here.
-        </p>
-      </div>
+      <Card className="mt-6 shadow-lg">
+        <CardHeader>
+          <TableCardTitle>Hiring Requests Overview</TableCardTitle>
+        </CardHeader>
+        <CardContent>
+          {hiringRequests.length > 0 ? (
+            <Table>
+              <TableCaption>A list of submitted hiring requests.</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Hiring ID</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Created Date</TableHead>
+                  <TableHead>Created By</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>HR Responsible</TableHead>
+                  <TableHead>Comment</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {hiringRequests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell className="font-medium">{request.id}</TableCell>
+                    <TableCell>{request.positionName}</TableCell>
+                    <TableCell>{request.department}</TableCell>
+                    <TableCell>{format(request.createdDate, 'PPP')}</TableCell>
+                    <TableCell>{request.createdBy}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          request.status === 'Approved' ? 'default' :
+                          request.status === 'Pending' ? 'secondary' :
+                          'destructive'
+                        }
+                        className={cn(
+                            request.status === 'Approved' && 'bg-green-500 hover:bg-green-600 text-white',
+                            request.status === 'Pending' && 'bg-yellow-500 hover:bg-yellow-600 text-black',
+                            request.status === 'Rejected' && 'bg-red-500 hover:bg-red-600 text-white'
+                        )}
+                      >
+                        {request.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{request.hrResponsible}</TableCell>
+                    <TableCell className="max-w-xs truncate" title={request.comment || undefined}>
+                      {request.comment || '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
+              <p className="text-muted-foreground text-center">
+                No hiring requests submitted yet.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
+
+    
