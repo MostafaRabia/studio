@@ -21,7 +21,7 @@ interface MonthlySalaryEntry {
   grossValue: number;
   netValue: number;
   benefits: string;
-  benefitsValue: number; // New field
+  benefitsValue: number; 
 }
 
 const mockSalaryHistory: MonthlySalaryEntry[] = [
@@ -38,20 +38,20 @@ export default function SalariesPage() {
         title="Salaries"
         description="Manage and view employee salary information."
       />
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="team-salaries" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="team-salaries">My Team Salaries</TabsTrigger>
           <TabsTrigger value="history">Monthly Salary History</TabsTrigger>
         </TabsList>
-        <TabsContent value="overview">
+        <TabsContent value="team-salaries">
           <Card className="mt-4 shadow-lg">
             <CardHeader>
-              <CardTitle>Salary Overview</CardTitle>
+              <CardTitle>My Team Salaries</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-md">
                 <p className="text-muted-foreground text-center">
-                  General salary management features will be implemented here.
+                  Team salary management features will be implemented here.
                 </p>
               </div>
             </CardContent>
