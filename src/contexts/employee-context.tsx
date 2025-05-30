@@ -10,6 +10,7 @@ interface EmployeeContextType {
   employees: Employee[];
   addEmployee: (employeeData: NewEmployeeFormValues) => void;
   updateEmployee: (id: string, employeeData: NewEmployeeFormValues) => void;
+  deleteEmployee: (id: string) => { deletedEmployeeName: string | undefined; managersNotified: Array<{ name: string; email: string }> };
 }
 
 const EmployeeContext = createContext<EmployeeContextType | undefined>(undefined);
@@ -41,11 +42,10 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
     setEmployees((prevEmployees) => {
       const updatedEmployees = [newEmployee, ...prevEmployees];
       
-      // Simulate sending email notifications to managers
       if (newEmployee.reportsTo && newEmployee.reportsTo.length > 0) {
         console.log(`Simulating notifications for new employee: ${newEmployee.name}`);
         newEmployee.reportsTo.forEach(managerId => {
-          const manager = updatedEmployees.find(emp => emp.id === managerId); // Check against updatedEmployees to include self if manager is the new employee somehow (edge case)
+          const manager = updatedEmployees.find(emp => emp.id === managerId);
           if (manager) {
             console.log(`--> Would send email notification to manager: ${manager.name} (${manager.email}) about new team member ${newEmployee.name}.`);
           } else {
@@ -85,8 +85,32 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const deleteEmployee = (id: string) => {
+    const employeeToDelete = employees.find(emp => emp.id === id);
+    const managersNotified: Array<{ name: string; email: string }> = [];
+
+    if (employeeToDelete) {
+      if (employeeToDelete.reportsTo && employeeToDelete.reportsTo.length > 0) {
+        console.log(`Simulating notifications for deletion of employee: ${employeeToDelete.name}`);
+        employeeToDelete.reportsTo.forEach(managerId => {
+          const manager = employees.find(emp => emp.id === managerId && emp.id !== id); // Ensure manager is not the employee themselves
+          if (manager && manager.email) {
+            managersNotified.push({ name: manager.name, email: manager.email });
+            console.log(`--> Would send email notification to manager: ${manager.name} (${manager.email}) about the departure/deletion of ${employeeToDelete.name}.`);
+          } else {
+            console.log(`--> Could not find manager with ID: ${managerId} (or manager has no email) to notify about deletion of ${employeeToDelete.name}.`);
+          }
+        });
+      }
+    }
+
+    setEmployees((prevEmployees) => prevEmployees.filter((emp) => emp.id !== id));
+    return { deletedEmployeeName: employeeToDelete?.name, managersNotified };
+  };
+
+
   return (
-    <EmployeeContext.Provider value={{ employees, addEmployee, updateEmployee }}>
+    <EmployeeContext.Provider value={{ employees, addEmployee, updateEmployee, deleteEmployee }}>
       {children}
     </EmployeeContext.Provider>
   );
