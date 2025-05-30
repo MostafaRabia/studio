@@ -86,7 +86,7 @@ export function AnnouncementsBoardClient({ initialAnnouncements }: Announcements
     defaultValues: {
       title: "",
       content: "",
-      author: "",
+      author: "Alice Wonderland", // Pre-filled author
       imageDataUrl: "",
       dataAiHint: "",
     },
@@ -125,7 +125,13 @@ export function AnnouncementsBoardClient({ initialAnnouncements }: Announcements
       description: `"${data.title}" has been successfully posted.`,
     });
     setIsDialogOpen(false);
-    form.reset();
+    form.reset({ // Reset form to default values, including pre-filled author
+      title: "",
+      content: "",
+      author: "Alice Wonderland", 
+      imageDataUrl: "",
+      dataAiHint: "",
+    });
     setImagePreview(null);
   };
   
@@ -137,7 +143,13 @@ export function AnnouncementsBoardClient({ initialAnnouncements }: Announcements
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) { // Reset form on dialog close
-            form.reset();
+            form.reset({
+              title: "",
+              content: "",
+              author: "Alice Wonderland",
+              imageDataUrl: "",
+              dataAiHint: "",
+            });
             setImagePreview(null);
           }
         }}>
