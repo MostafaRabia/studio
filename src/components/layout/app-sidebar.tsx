@@ -16,7 +16,7 @@ import {
 import { AppLogo } from "./app-logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork, Bell, Plane, DollarSign } from "lucide-react"; // Added DollarSign
+import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork, Bell, Plane, DollarSign, ClipboardList } from "lucide-react"; // Added ClipboardList
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -27,6 +27,7 @@ const menuItems = [
   { href: "/resources", label: "Resources", icon: Library },
   { href: "/vacations", label: "Vacations", icon: Plane },
   { href: "/salaries", label: "Salaries", icon: DollarSign },
+  { href: "/hiring", label: "Hiring", icon: ClipboardList },
 ];
 
 export function AppSidebar() {
