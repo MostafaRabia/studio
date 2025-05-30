@@ -29,26 +29,52 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEmployees } from '@/contexts/employee-context'; 
+import { useEmployees } from '@/contexts/employee-context';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const hiringRequestFormSchema = z.object({
-  hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }), 
+  hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }),
   department: z.string().min(1, { message: "Department is required." }).max(100),
   positionName: z.string().min(3, { message: "Position name must be at least 3 characters." }).max(100),
   startingDate: z.date({
     required_error: "Starting date is required.",
   }),
   qualificationsRequested: z.string().min(10, { message: "Qualifications must be at least 10 characters." }).max(1000),
-  countryOfHiring: z.string().min(2, { message: "Country of hiring is required." }).max(50),
+  countryOfHiring: z.string().min(2, { message: "Country of hiring is required." }).max(100), // Increased max length for longer country names
 });
 
 type HiringRequestFormValues = z.infer<typeof hiringRequestFormSchema>;
+
+// A comprehensive list of countries
+const countries = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
+  "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+  "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia",
+  "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo, Democratic Republic of the",
+  "Congo, Republic of the", "Costa Rica", "Cote d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti",
+  "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini",
+  "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala",
+  "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland",
+  "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos",
+  "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi",
+  "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova",
+  "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands",
+  "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau",
+  "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania",
+  "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino",
+  "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
+  "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden",
+  "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago",
+  "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom",
+  "United States of America", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+];
+
 
 export default function HiringPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
   const { toast } = useToast();
-  const { employees } = useEmployees(); 
+  const { employees } = useEmployees();
 
   const uniqueDepartments = useMemo(() => {
     const departmentsSet = new Set(employees.map(emp => emp.department).filter(Boolean));
@@ -72,8 +98,8 @@ export default function HiringPage() {
       title: "Hiring Request Submitted",
       description: `Request for ${data.positionName} by ${data.hiringManagerName} has been submitted.`,
     });
-    setIsDialogOpen(false); 
-    form.reset(); 
+    setIsDialogOpen(false);
+    form.reset();
   };
 
   return (
@@ -189,7 +215,7 @@ export default function HiringPage() {
                                   field.onChange(date);
                                   setIsStartDatePopoverOpen(false);
                                 }}
-                                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} 
+                                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))}
                                 initialFocus
                               />
                             </PopoverContent>
@@ -217,9 +243,22 @@ export default function HiringPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Country of Hiring</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., United States" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a country" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <ScrollArea className="h-[200px]"> {/* Makes the country list scrollable */}
+                                {countries.map((country) => (
+                                  <SelectItem key={country} value={country}>
+                                    {country}
+                                  </SelectItem>
+                                ))}
+                              </ScrollArea>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -255,4 +294,3 @@ export default function HiringPage() {
     </>
   );
 }
-
