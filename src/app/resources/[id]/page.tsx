@@ -56,10 +56,7 @@ export default function ResourceDetailPage() {
                 Delete Resource
               </Button>
             </Link>
-            <Button variant="outline" onClick={() => router.push('/resources')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Resource Hub
-            </Button>
+            {/* "Back to Resource Hub" button removed from here */}
           </div>
         }
       />
