@@ -50,7 +50,7 @@ export interface Resource {
   description?: string;
   link: string;
   category: string;
-  icon: LucideIcon; // Lucide icon component
+  iconName: string; // Changed from icon: LucideIcon
   dataAiHint?: string;
 }
 
@@ -172,7 +172,7 @@ export const resources: Resource[] = [
     description: 'Comprehensive guide to company policies and procedures.',
     link: '#',
     category: 'Company Policies',
-    icon: FileText,
+    iconName: 'FileText', // Changed
     dataAiHint: 'document policy',
   },
   {
@@ -181,7 +181,7 @@ export const resources: Resource[] = [
     description: 'Access your health insurance, retirement plans, and other benefits.',
     link: '#',
     category: 'Benefits',
-    icon: ShieldCheck,
+    iconName: 'ShieldCheck', // Changed
     dataAiHint: 'health benefits',
   },
   {
@@ -190,7 +190,7 @@ export const resources: Resource[] = [
     description: 'Find help for common IT issues and request support.',
     link: '#',
     category: 'IT & Support',
-    icon: ExternalLink,
+    iconName: 'ExternalLink', // Changed
     dataAiHint: 'tech support',
   },
   {
@@ -199,7 +199,7 @@ export const resources: Resource[] = [
     description: 'Information on the performance review process.',
     link: '#',
     category: 'Career Development',
-    icon: Handshake,
+    iconName: 'Handshake', // Changed
     dataAiHint: 'career growth',
   },
    {
@@ -208,7 +208,7 @@ export const resources: Resource[] = [
     description: 'Our principles for ethical behavior and professional conduct.',
     link: '#',
     category: 'Company Policies',
-    icon: FileText,
+    iconName: 'FileText', // Changed
     dataAiHint: 'ethics conduct',
   },
   {
@@ -217,7 +217,7 @@ export const resources: Resource[] = [
     description: 'Submit your time-off requests here.',
     link: '#',
     category: 'Benefits',
-    icon: ExternalLink,
+    iconName: 'ExternalLink', // Changed
     dataAiHint: 'travel vacation',
   },
 ];

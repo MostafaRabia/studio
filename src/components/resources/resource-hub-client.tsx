@@ -8,19 +8,37 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ExternalLink, PlusCircle, FolderPlus } from 'lucide-react';
+import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon } from 'lucide-react'; // Added more icons
 import React, { useMemo, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper function to get the icon component based on name
+const getIconComponent = (iconName?: string): LucideIcon => {
+  if (!iconName) return ExternalLink; // Default icon
+  switch (iconName) {
+    case 'FileText':
+      return FileText;
+    case 'ShieldCheck':
+      return ShieldCheck;
+    case 'ExternalLink':
+      return ExternalLink;
+    case 'Handshake':
+      return Handshake;
+    // Add other icons used in your resources here
+    default:
+      return ExternalLink; // Fallback icon
+  }
+};
+
 interface ResourceCardProps {
   resource: Resource;
 }
 
 function ResourceCard({ resource }: ResourceCardProps) {
-  const IconComponent = resource.icon;
+  const IconComponent = getIconComponent(resource.iconName);
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
       <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-4">
