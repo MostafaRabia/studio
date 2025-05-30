@@ -4,14 +4,14 @@
 import type { Resource } from '@/lib/placeholder-data';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button, buttonVariants } from '@/components/ui/button'; // Added buttonVariants import
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info, Folder, Link as LinkIcon } from 'lucide-react'; // Added Folder and LinkIcon
+import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info, Folder, Link as LinkIconLucide } from 'lucide-react';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +25,7 @@ const iconOptions = [
   { value: 'ShieldCheck', label: 'Shield Check' },
   { value: 'Handshake', label: 'Handshake' },
   { value: 'BookOpen', label: 'Book Open' },
-  { value: 'LinkIcon', label: 'Link Icon' }, // Changed 'Link' to 'LinkIcon' to avoid conflict with Link from next/link
+  { value: 'LinkIconLucide', label: 'Link Icon' },
   { value: 'Folder', label: 'Folder Icon' },
   { value: 'Info', label: 'Info Icon' },
 ];
@@ -38,7 +38,7 @@ const getIconComponent = (iconName?: string): LucideIcon => {
     case 'ExternalLink': return ExternalLink;
     case 'Handshake': return Handshake;
     case 'BookOpen': return BookOpen;
-    case 'LinkIcon': return LinkIcon; // Changed 'Link' to 'LinkIcon'
+    case 'LinkIconLucide': return LinkIconLucide;
     case 'Folder': return Folder;
     case 'Info': return Info;
     default: return ExternalLink;
@@ -48,40 +48,40 @@ const getIconComponent = (iconName?: string): LucideIcon => {
 interface ResourceCardProps {
   resource: Resource;
   onEdit: (resource: Resource) => void;
-  onRemove: (resourceId: string) => void;
+  onRemoveRequest: (resourceId: string) => void; // Renamed to avoid confusion with DOM onRemove
 }
 
-function ResourceCard({ resource, onEdit, onRemove }: ResourceCardProps) {
+function ResourceCard({ resource, onEdit, onRemoveRequest }: ResourceCardProps) {
   const IconComponent = getIconComponent(resource.iconName);
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-4">
-        <div className="bg-primary/10 p-3 rounded-lg">
-          <IconComponent className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <CardTitle className="text-lg">{resource.title}</CardTitle>
-           {resource.description && (
-            <CardDescription className="text-xs mt-1 line-clamp-2">
-              {resource.description}
-            </CardDescription>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <Link href={resource.link} target="_blank" rel="noopener noreferrer" className="mt-auto">
-          <span className="inline-flex items-center text-sm font-medium text-primary hover:underline group">
-            Access Resource
-            <ExternalLink className="ml-1.5 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-          </span>
-        </Link>
-      </CardContent>
-      <CardFooter className="pt-4 border-t mt-auto">
+      <Link href={`/resources/${resource.id}`} passHref legacyBehavior>
+        <a className="flex flex-col flex-grow focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg group cursor-pointer">
+          <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-4 group-hover:bg-accent/50 transition-colors">
+            <div className="bg-primary/10 p-3 rounded-lg">
+              <IconComponent className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg group-hover:text-primary transition-colors">{resource.title}</CardTitle>
+               {resource.description && (
+                <CardDescription className="text-xs mt-1 line-clamp-2">
+                  {resource.description}
+                </CardDescription>
+              )}
+            </div>
+          </CardHeader>
+          {/* CardContent that previously held the external link is removed. 
+              The link wrapper itself will grow due to flex-grow on the anchor tag.
+          */}
+        </a>
+      </Link>
+      <CardFooter className="pt-4 border-t">
         <div className="flex justify-end gap-2 w-full">
           <Button variant="outline" size="sm" onClick={() => onEdit(resource)}>
             <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => onRemove(resource.id)}>
+          {/* The AlertDialogTrigger is outside this component, so onRemoveRequest directly calls the handler to open it */}
+          <Button variant="destructive" size="sm" onClick={() => onRemoveRequest(resource.id)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
           </Button>
         </div>
@@ -96,7 +96,7 @@ const newCategoryFormSchema = z.object({
 type NewCategoryFormValues = z.infer<typeof newCategoryFormSchema>;
 
 const resourceFormSchema = z.object({
-  id: z.string().optional(), // Only present for editing
+  id: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters.").max(100),
   description: z.string().max(200).optional(),
   link: z.string().url("Please enter a valid URL."),
@@ -173,15 +173,14 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
   };
 
   const handleResourceFormSubmit: SubmitHandler<ResourceFormValues> = (data) => {
-    if (editingResource) { // Editing existing resource
+    if (editingResource) {
       setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...data, id: editingResource.id } : r));
       toast({ title: "Resource Updated", description: `"${data.title}" has been updated.` });
     } else {
-      // Add new resource logic (placeholder for now, can be expanded)
       const newResource: Resource = {
         id: Date.now().toString(),
         ...data,
-        description: data.description || "", // ensure description is string
+        description: data.description || "",
       };
       setResources(prev => [newResource, ...prev]);
       toast({ title: "Resource Added", description: `"${data.title}" has been added.` });
@@ -226,7 +225,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       <div className="flex justify-end gap-2">
         <Button onClick={() => {
           setEditingResource(null);
-          resourceForm.reset({ title: "", description: "", link: "", category: "", iconName: "ExternalLink" });
+          resourceForm.reset({ title: "", description: "", link: "", category: sortedDisplayCategories[0] || "", iconName: "ExternalLink" });
           setIsResourceFormOpen(true);
         }}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add New Resource
@@ -266,7 +265,6 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
         </Dialog>
       </div>
 
-      {/* Edit/Add Resource Dialog */}
       <Dialog open={isResourceFormOpen} onOpenChange={(isOpen) => {
         setIsResourceFormOpen(isOpen);
         if (!isOpen) {
@@ -304,7 +302,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
               <FormField control={resourceForm.control} name="category" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || (sortedDisplayCategories[0] || "")} >
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {sortedDisplayCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
@@ -334,7 +332,6 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
         </DialogContent>
       </Dialog>
 
-      {/* Remove Resource Confirmation Dialog */}
       <AlertDialog open={!!resourceToRemove} onOpenChange={(isOpen) => !isOpen && setResourceToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -346,7 +343,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setResourceToRemove(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRemoveResource} className={buttonVariants({ variant: "destructive" })}>
+            <AlertDialogAction onClick={confirmRemoveResource} className={cn(buttonVariants({ variant: "destructive" }))}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -367,7 +364,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
                       key={resource.id} 
                       resource={resource} 
                       onEdit={handleOpenEditResourceDialog}
-                      onRemove={() => handleOpenRemoveResourceDialog(resource.id)} // Ensure correct call
+                      onRemoveRequest={() => handleOpenRemoveResourceDialog(resource.id)}
                     />
                   ))}
                 </div>
