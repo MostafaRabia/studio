@@ -3,7 +3,7 @@
 
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import {
   Dialog,
@@ -15,10 +15,58 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import React from 'react'; // Import React for useState if needed later
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import React, { useState } from 'react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+
+const hiringRequestFormSchema = z.object({
+  hiringManagerName: z.string().min(2, { message: "Hiring manager name must be at least 2 characters." }).max(100),
+  department: z.string().min(2, { message: "Department is required." }).max(100),
+  positionName: z.string().min(3, { message: "Position name must be at least 3 characters." }).max(100),
+  startingDate: z.date({
+    required_error: "Starting date is required.",
+  }),
+  qualificationsRequested: z.string().min(10, { message: "Qualifications must be at least 10 characters." }).max(1000),
+  countryOfHiring: z.string().min(2, { message: "Country of hiring is required." }).max(50),
+});
+
+type HiringRequestFormValues = z.infer<typeof hiringRequestFormSchema>;
 
 export default function HiringPage() {
-  // const [isDialogOpen, setIsDialogOpen] = React.useState(false); // If manual control is needed
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<HiringRequestFormValues>({
+    resolver: zodResolver(hiringRequestFormSchema),
+    defaultValues: {
+      hiringManagerName: "",
+      department: "",
+      positionName: "",
+      qualificationsRequested: "",
+      countryOfHiring: "",
+    },
+  });
+
+  const onSubmit: SubmitHandler<HiringRequestFormValues> = (data) => {
+    console.log("New Hiring Request Data:", data);
+    toast({
+      title: "Hiring Request Submitted",
+      description: `Request for ${data.positionName} has been submitted.`,
+    });
+    setIsDialogOpen(false); // Close the dialog
+    form.reset(); // Reset form fields
+  };
 
   return (
     <>
@@ -27,32 +75,133 @@ export default function HiringPage() {
         description="Manage job openings, candidates, and the hiring process."
         actions={
           <div className="flex gap-2">
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setIsDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   New Hiring Request
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle>New Hiring Request</DialogTitle>
                   <DialogDescription>
-                    Fill in the details below to create a new hiring request. This form is a placeholder.
+                    Fill in the details below to create a new hiring request.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  {/* Form fields will go here in the future */}
-                  <p className="text-sm text-muted-foreground">Hiring request form fields will appear here.</p>
-                </div>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} id="hiringRequestForm" className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-2">
+                    <FormField
+                      control={form.control}
+                      name="hiringManagerName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hiring Manager Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Jane Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="department"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Engineering" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="positionName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Position Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Senior Software Engineer" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="startingDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Starting Date</FormLabel>
+                           <Popover open={isStartDatePopoverOpen} onOpenChange={setIsStartDatePopoverOpen} modal={false}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {field.value ? format(field.value, "PPP") : <span>Pick a start date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  field.onChange(date);
+                                  setIsStartDatePopoverOpen(false);
+                                }}
+                                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} // Disable past dates
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="qualificationsRequested"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Qualifications Requested</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Describe the required skills and experience..." rows={4} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="countryOfHiring"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country of Hiring</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., United States" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="outline">
+                    <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); form.reset(); }}>
                       Cancel
                     </Button>
                   </DialogClose>
-                  <Button type="submit" form="hiringRequestForm"> {/* Assuming form id will be hiringRequestForm */}
-                    Submit Request
+                  <Button type="submit" form="hiringRequestForm" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Submitting..." : "Submit Request"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
