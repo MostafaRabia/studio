@@ -1,4 +1,3 @@
-"use client";
 
 import type { Resource } from '@/lib/placeholder-data';
 import Link from 'next/link';
