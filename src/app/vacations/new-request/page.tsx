@@ -24,7 +24,7 @@ interface MyVacationRequest {
   startDate: Date;
   endDate: Date;
   numberOfDays: number;
-  vacationType: string; // Still in data, but column removed from table
+  vacationType: string; // Still in data, but column removed from table based on previous request
   submittingDate: Date;
   approvedFrom?: string; // Manager's name or ID
   status: 'Pending' | 'Approved' | 'Rejected';
@@ -48,7 +48,7 @@ const initialMockRequests: MyVacationRequest[] = [
     numberOfDays: 3,
     vacationType: 'Sick Leave',
     submittingDate: new Date('2024-08-28'),
-    approvedFrom: 'N/A',
+    // approvedFrom: 'N/A', // Field is optional
     status: 'Pending',
   },
   {
@@ -89,74 +89,80 @@ export default function NewVacationRequestPage() {
                 Back to Vacations
               </Button>
             </Link>
-            {/* Placeholder for New Request Button that would open a dialog - currently simplified */}
-            {/* <Button onClick={() => console.log("New Request Dialog would open")}>
+            {/* Dialog button for new request is simplified for now to debug table visibility */}
+            {/* 
+            <Button onClick={() => console.log("New Request Dialog would open")}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Request Time Off
-            </Button> */}
+            </Button> 
+            */}
           </div>
         }
       />
 
-      {/* My Requests Status Section */}
-      <Card className="mt-8 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <ListChecks className="mr-2 h-5 w-5 text-primary" />
-            My Requests Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {myRequests.length > 0 ? (
-            <Table>
-              <TableCaption>A list of your submitted vacation requests.</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Request Date</TableHead>
-                  <TableHead className="text-center">Number of Days</TableHead>
-                  <TableHead>Starts From</TableHead>
-                  <TableHead>End At</TableHead>
-                  <TableHead>Approval By</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {myRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>{format(request.submittingDate, 'PPP')}</TableCell>
-                    <TableCell className="text-center">{request.numberOfDays}</TableCell>
-                    <TableCell>{format(request.startDate, 'PPP')}</TableCell>
-                    <TableCell>{format(request.endDate, 'PPP')}</TableCell>
-                    <TableCell>{request.approvedFrom || 'N/A'}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge
-                        variant={
-                          request.status === 'Approved'
-                            ? 'default'
-                            : request.status === 'Pending'
-                            ? 'secondary'
-                            : 'destructive'
-                        }
-                        className={
-                           request.status === 'Approved' ? 'bg-green-500 hover:bg-green-600 text-white' 
-                           : request.status === 'Pending' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' 
-                           : 'bg-red-500 hover:bg-red-600 text-white'
-                        }
-                      >
-                        {request.status}
-                      </Badge>
-                    </TableCell>
+      {/* Debug wrapper for My Requests Status Section */}
+      <div className="border-4 border-red-500 p-4 my-4 bg-yellow-100 min-h-[200px]">
+        <p className="text-black font-bold text-lg mb-2">DEBUG: 'My Requests Status' Section Container</p>
+        
+        <Card className="shadow-lg border-2 border-blue-600 bg-slate-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-black"> {/* Explicit text color */}
+              <ListChecks className="mr-2 h-5 w-5 text-primary" />
+              My Requests Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6"> {/* Ensure padding is applied */}
+            {myRequests.length > 0 ? (
+              <Table>
+                <TableCaption className="text-gray-700">A list of your submitted vacation requests.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-black">Request Date</TableHead>
+                    <TableHead className="text-center text-black">Number of Days</TableHead>
+                    <TableHead className="text-black">Starts From</TableHead>
+                    <TableHead className="text-black">End At</TableHead>
+                    <TableHead className="text-black">Approval By</TableHead>
+                    <TableHead className="text-right text-black">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
-              <p className="text-muted-foreground">You haven't submitted any vacation requests yet.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {myRequests.map((request) => (
+                    <TableRow key={request.id} className="bg-white even:bg-gray-50">
+                      <TableCell className="text-black">{format(request.submittingDate, 'PPP')}</TableCell>
+                      <TableCell className="text-center text-black">{request.numberOfDays}</TableCell>
+                      <TableCell className="text-black">{format(request.startDate, 'PPP')}</TableCell>
+                      <TableCell className="text-black">{format(request.endDate, 'PPP')}</TableCell>
+                      <TableCell className="text-black">{request.approvedFrom || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant={
+                            request.status === 'Approved'
+                              ? 'default'
+                              : request.status === 'Pending'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                          className={
+                             request.status === 'Approved' ? 'bg-green-500 hover:bg-green-600 text-white' 
+                             : request.status === 'Pending' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' 
+                             : 'bg-red-500 hover:bg-red-600 text-white'
+                          }
+                        >
+                          {request.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-md">
+                <p className="text-muted-foreground">You haven't submitted any vacation requests yet.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 }
