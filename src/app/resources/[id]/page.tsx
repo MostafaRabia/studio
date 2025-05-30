@@ -100,7 +100,6 @@ export default function ResourceDetailPage() {
         title: "Settings Saved",
         description: `Rule configurations for ${selectedEmployee.name} have been notionally saved.`,
       });
-      // In a real app, this is where you'd send data to a backend.
       console.log("Saving settings for employee:", selectedEmployee.id, employeeRuleSettings[selectedEmployee.id]);
     }
   };
@@ -117,6 +116,11 @@ export default function ResourceDetailPage() {
     );
   }
 
+  const pageTitle = resource.id === '7' ? "Employee Rules" : resource.title;
+  const pageDescription = resource.id === '7' 
+    ? "Configure rule settings for individual employees." 
+    : resource.description || "Details for this resource.";
+
   const hasInternalText = resource.internalText && resource.internalText.trim() !== '';
   const hasTextAttachment = !!resource.textAttachment;
   const hasExternalLink = !!resource.link && resource.link.trim() !== '';
@@ -125,8 +129,8 @@ export default function ResourceDetailPage() {
   return (
     <>
       <PageHeader
-        title={resource.title}
-        description={resource.description || "Details for this resource."}
+        title={pageTitle}
+        description={pageDescription}
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
             {resource.id === '7' && (
@@ -231,7 +235,7 @@ export default function ResourceDetailPage() {
         </Card>
       )}
 
-      {/* Conditionally render the main resource content card */}
+      {/* Conditionally render the main resource content card only if not Employee Rules page */}
       {resource.id !== '7' && (
         <Card className="shadow-lg mb-6">
           <CardHeader>
@@ -279,28 +283,18 @@ export default function ResourceDetailPage() {
               </div>
             )}
 
-            {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id !== '7' && (
+            {!hasInternalText && !hasTextAttachment && !hasExternalLink && (
               <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
                   <p className="text-muted-foreground text-center">
                     No specific content configured for this resource.
                   </p>
                 </div>
             )}
-            {/* This specific fallback for id === '7' is no longer needed if the whole card is hidden */}
-            {/* {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id === '7' && (
-              <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
-                  <p className="text-muted-foreground text-center">
-                    No general content for "Employee Rules". 
-                    <br /> Select an employee above to configure their specific rules.
-                  </p>
-                </div>
-            )} */}
           </CardContent>
         </Card>
       )}
       
       {/* Fallback message if it's resource '7' AND no employee is selected (to guide the user) */}
-      {/* This might be redundant if the primary interaction is clear from the config card */}
       {resource.id === '7' && !selectedEmployee && (
         <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
             <p className="text-muted-foreground text-center">

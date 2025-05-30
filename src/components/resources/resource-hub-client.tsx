@@ -111,8 +111,8 @@ const resourceFormSchema = z.object({
   internalText: z.string().optional(),
   textAttachmentFile: z.custom<FileList>().optional(),
   textAttachment: attachmentSchema.optional(), 
-}).refine(data => !!data.link || !!data.internalText, {
-  message: "Either an external link or internal text content is required.",
+}).refine(data => !!data.link || !!data.internalText || !!data.textAttachment, {
+  message: "Either an external link, internal text content, or an attachment is required.",
   path: ["link"], 
 });
 
@@ -130,7 +130,8 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
   const router = useRouter();
 
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-  const [resources, setResources] = useState<Resource[]>(initialResources);
+  // Filter out resource with ID '7' from the initial display
+  const [resources, setResources] = useState<Resource[]>(initialResources.filter(r => r.id !== '7'));
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [isResourceFormOpen, setIsResourceFormOpen] = useState(false);
   const [resourceToRemove, setResourceToRemove] = useState<string | null>(null);
@@ -174,17 +175,17 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
     const editResourceId = searchParams.get('edit');
     const deleteResourceId = searchParams.get('delete');
 
-    if (editResourceId) {
+    if (editResourceId && editResourceId !== '7') { // Ensure we don't try to edit '7' this way
       const resourceToEdit = resources.find(r => r.id === editResourceId);
       if (resourceToEdit) {
         handleOpenEditResourceDialog(resourceToEdit);
       }
-      router.replace('/resources', { scroll: false }); // Clear query param
-    } else if (deleteResourceId) {
+      router.replace('/resources', { scroll: false }); 
+    } else if (deleteResourceId && deleteResourceId !== '7') { // Ensure we don't try to delete '7' this way
       handleOpenRemoveResourceDialog(deleteResourceId);
-      router.replace('/resources', { scroll: false }); // Clear query param
+      router.replace('/resources', { scroll: false }); 
     }
-  }, [searchParams, resources, router]); // Added resources and router to dependency array
+  }, [searchParams, resources, router]); 
 
 
   const handleTextAttachmentFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -412,7 +413,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
               )}/>
               
               <div className="my-4 border-t pt-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Content Type (select at least one)</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Content Type (provide at least one source)</h3>
                  <FormField control={resourceForm.control} name="internalText" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Internal Text Content</FormLabel>
@@ -504,6 +505,10 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
       {sortedDisplayCategories.length > 0 ? (
         sortedDisplayCategories.map((category) => {
           const resourcesForCategory = displayCategorizedResources[category] || [];
+          // Skip rendering the category if it's empty (e.g., after filtering or deletion)
+          if (resourcesForCategory.length === 0 && !allCategories.includes(category)) {
+            return null;
+          }
           return (
             <section key={category}>
               <h2 className="text-2xl font-semibold mb-4 pb-2 border-b border-border">{category}</h2>
@@ -536,3 +541,4 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
     </div>
   );
 }
+
