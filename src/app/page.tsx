@@ -39,8 +39,7 @@ export default function HomePage() {
   return (
     <>
       <PageHeader
-        title="Welcome to HR Compass"
-        description="Your central hub for all HR-related information and tools."
+        title="HR Dashboard"
       />
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
         {features.map((feature) => (
