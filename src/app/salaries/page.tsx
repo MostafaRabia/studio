@@ -13,7 +13,7 @@ import {
   TableCell,
   TableCaption,
 } from '@/components/ui/table';
-import React from 'react'; // Import React
+import React from 'react'; 
 
 interface MonthlySalaryEntry {
   id: string;
@@ -21,13 +21,14 @@ interface MonthlySalaryEntry {
   grossValue: number;
   netValue: number;
   benefits: string;
+  benefitsValue: number; // New field
 }
 
 const mockSalaryHistory: MonthlySalaryEntry[] = [
-  { id: '1', month: 'January 2024', grossValue: 5000, netValue: 4000, benefits: 'Health Insurance, Gym' },
-  { id: '2', month: 'February 2024', grossValue: 5000, netValue: 4000, benefits: 'Health Insurance, Gym' },
-  { id: '3', month: 'March 2024', grossValue: 5200, netValue: 4150, benefits: 'Health Insurance, Gym, Bonus' },
-  { id: '4', month: 'April 2024', grossValue: 5200, netValue: 4150, benefits: 'Health Insurance, Gym' },
+  { id: '1', month: 'January 2024', grossValue: 5000, netValue: 4000, benefits: 'Health Insurance, Gym', benefitsValue: 500 },
+  { id: '2', month: 'February 2024', grossValue: 5000, netValue: 4000, benefits: 'Health Insurance, Gym', benefitsValue: 500 },
+  { id: '3', month: 'March 2024', grossValue: 5200, netValue: 4150, benefits: 'Health Insurance, Gym, Bonus', benefitsValue: 550 },
+  { id: '4', month: 'April 2024', grossValue: 5200, netValue: 4150, benefits: 'Health Insurance, Gym', benefitsValue: 550 },
 ];
 
 export default function SalariesPage() {
@@ -70,7 +71,8 @@ export default function SalariesPage() {
                       <TableHead className="w-[150px]">Month</TableHead>
                       <TableHead className="text-right">Gross Value</TableHead>
                       <TableHead className="text-right">Net Value</TableHead>
-                      <TableHead>Benefits</TableHead>
+                      <TableHead>Benefits Description</TableHead>
+                      <TableHead className="text-right">Benefits Value</TableHead> 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -80,6 +82,7 @@ export default function SalariesPage() {
                         <TableCell className="text-right">${entry.grossValue.toLocaleString()}</TableCell>
                         <TableCell className="text-right">${entry.netValue.toLocaleString()}</TableCell>
                         <TableCell>{entry.benefits}</TableCell>
+                        <TableCell className="text-right">${entry.benefitsValue.toLocaleString()}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
