@@ -8,7 +8,7 @@ export default function HiringPage() {
   return (
     <>
       <PageHeader
-        title="Hiring Dashboard"
+        title="Hiring"
         description="Manage job openings, candidates, and the hiring process."
         actions={
           <Link href="/" passHref>
@@ -27,3 +27,4 @@ export default function HiringPage() {
     </>
   );
 }
+
