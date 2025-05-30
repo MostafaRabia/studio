@@ -4,14 +4,14 @@
 import type { Resource } from '@/lib/placeholder-data';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button'; // Added buttonVariants import
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info } from 'lucide-react';
+import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info, Folder, Link as LinkIcon } from 'lucide-react'; // Added Folder and LinkIcon
 import React, { useMemo, useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +25,7 @@ const iconOptions = [
   { value: 'ShieldCheck', label: 'Shield Check' },
   { value: 'Handshake', label: 'Handshake' },
   { value: 'BookOpen', label: 'Book Open' },
-  { value: 'Link', label: 'Link Icon' },
+  { value: 'LinkIcon', label: 'Link Icon' }, // Changed 'Link' to 'LinkIcon' to avoid conflict with Link from next/link
   { value: 'Folder', label: 'Folder Icon' },
   { value: 'Info', label: 'Info Icon' },
 ];
@@ -38,7 +38,7 @@ const getIconComponent = (iconName?: string): LucideIcon => {
     case 'ExternalLink': return ExternalLink;
     case 'Handshake': return Handshake;
     case 'BookOpen': return BookOpen;
-    case 'Link': return Link;
+    case 'LinkIcon': return LinkIcon; // Changed 'Link' to 'LinkIcon'
     case 'Folder': return Folder;
     case 'Info': return Info;
     default: return ExternalLink;
@@ -367,7 +367,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
                       key={resource.id} 
                       resource={resource} 
                       onEdit={handleOpenEditResourceDialog}
-                      onRemove={handleOpenRemoveResourceDialog}
+                      onRemove={() => handleOpenRemoveResourceDialog(resource.id)} // Ensure correct call
                     />
                   ))}
                 </div>
@@ -389,5 +389,3 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
     </div>
   );
 }
-
-    
