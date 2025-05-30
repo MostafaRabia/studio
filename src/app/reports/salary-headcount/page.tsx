@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -26,7 +27,9 @@ const generateMockData = () => {
     const numEmployees = Math.floor(Math.random() * 20) + 30; // e.g., 30-50 employees
     const baseSalary = 5000 + Math.random() * 1000; // Average base salary
     const totalSalaries = Math.floor(numEmployees * baseSalary * (1 + (Math.random() - 0.5) * 0.2)); // Fluctuate total
-    const averageSalary = Math.floor(totalSalaries / numEmployees);
+    
+    // Ensure averageSalary is 0 if numEmployees is 0 (though current logic for numEmployees prevents this)
+    const averageSalary = numEmployees > 0 ? Math.floor(totalSalaries / numEmployees) : 0;
 
     data.push({
       monthYear,
