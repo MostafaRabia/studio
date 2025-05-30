@@ -72,6 +72,49 @@ export default function ResourceDetailPage() {
           </div>
         }
       />
+
+      {/* Employee specific rule configuration section - MOVED TO TOP */}
+      {resource.id === '7' && (
+        <Card className="mb-6 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Settings className="mr-2 h-5 w-5 text-primary" />
+              Employee-Specific Rule Configuration
+            </CardTitle>
+            <CardDescription>
+              Select an employee to view or set rules specific to them.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select onValueChange={setSelectedEmployeeId} value={selectedEmployeeId || undefined}>
+              <SelectTrigger className="w-full md:w-[300px]">
+                <SelectValue placeholder="Select an employee..." />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.name} ({employee.jobTitle})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedEmployee && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Configuring rules for: <span className="font-medium text-primary">{selectedEmployee.name}</span>
+              </p>
+            )}
+            <div className="mt-4 flex items-center justify-center h-20 border-2 border-dashed rounded-md">
+              <p className="text-muted-foreground text-center">
+                {selectedEmployee ?
+                  `Rule configurations specific to ${selectedEmployee.name} would appear here.` :
+                  "Select an employee to see specific rule configurations."
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="shadow-lg mb-6">
         <CardHeader>
           <CardTitle>{resource.title}</CardTitle>
@@ -123,48 +166,6 @@ export default function ResourceDetailPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Employee specific rule configuration section */}
-      {resource.id === '7' && (
-        <Card className="mt-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Settings className="mr-2 h-5 w-5 text-primary" />
-              Employee-Specific Rule Configuration
-            </CardTitle>
-            <CardDescription>
-              Select an employee to view or set rules specific to them.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select onValueChange={setSelectedEmployeeId} value={selectedEmployeeId || undefined}>
-              <SelectTrigger className="w-full md:w-[300px]">
-                <SelectValue placeholder="Select an employee..." />
-              </SelectTrigger>
-              <SelectContent>
-                {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name} ({employee.jobTitle})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedEmployee && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Configuring rules for: <span className="font-medium text-primary">{selectedEmployee.name}</span>
-              </p>
-            )}
-            <div className="mt-4 flex items-center justify-center h-20 border-2 border-dashed rounded-md">
-              <p className="text-muted-foreground text-center">
-                {selectedEmployee ?
-                  `Rule configurations specific to ${selectedEmployee.name} would appear here.` :
-                  "Select an employee to see specific rule configurations."
-                }
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </>
   );
 }
