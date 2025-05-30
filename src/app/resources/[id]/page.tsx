@@ -8,7 +8,7 @@ import type { Resource } from '@/lib/placeholder-data';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, ExternalLink, FileText, Download } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Download, Edit, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown'; // For rendering internal text
 import React from 'react';
 
@@ -41,10 +41,24 @@ export default function ResourceDetailPage() {
         title={resource.title}
         description={resource.description || "Details for this resource."}
         actions={
-          <Button variant="outline" onClick={() => router.push('/resources')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Resource Hub
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Link href={`/resources?edit=${resource.id}`} passHref>
+              <Button variant="outline">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Resource
+              </Button>
+            </Link>
+            <Link href={`/resources?delete=${resource.id}`} passHref>
+              <Button variant="destructive" className="bg-destructive hover:bg-destructive/90">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Resource
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={() => router.push('/resources')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Resource Hub
+            </Button>
+          </div>
         }
       />
       <Card className="shadow-lg">

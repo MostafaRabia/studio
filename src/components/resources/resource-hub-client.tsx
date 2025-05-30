@@ -12,13 +12,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ExternalLink, PlusCircle, FolderPlus, FileText, ShieldCheck, Handshake, type LucideIcon, Pencil, Trash2, BookOpen, Info, Folder, Link as LinkIconLucide, Paperclip, X } from 'lucide-react';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const iconOptions = [
   { value: 'FileText', label: 'File Text' },
@@ -104,15 +105,15 @@ const resourceFormSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters.").max(100),
   description: z.string().max(200).optional(),
-  link: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+  link: z.string().url("Please enter a valid URL for external links.").optional().or(z.literal('')),
   category: z.string().min(1, "Category is required."),
   iconName: z.string().min(1, "Icon is required."),
   internalText: z.string().optional(),
   textAttachmentFile: z.custom<FileList>().optional(),
-  textAttachment: attachmentSchema.optional(), // To store existing attachment details
+  textAttachment: attachmentSchema.optional(), 
 }).refine(data => !!data.link || !!data.internalText, {
   message: "Either an external link or internal text content is required.",
-  path: ["link"], // You can choose a more general path or duplicate for internalText
+  path: ["link"], 
 });
 
 export type ResourceFormValues = z.infer<typeof resourceFormSchema>;
@@ -125,6 +126,9 @@ interface ResourceHubClientProps {
 
 export function ResourceHubClient({ initialResources }: ResourceHubClientProps) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [resources, setResources] = useState<Resource[]>(initialResources);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
@@ -132,7 +136,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
   const [resourceToRemove, setResourceToRemove] = useState<string | null>(null);
   const [textAttachmentPreview, setTextAttachmentPreview] = useState<{ name: string; size: number; type: string } | null>(null);
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   const derivedCategories = useMemo(() => {
@@ -166,12 +170,29 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
     },
   });
 
+  useEffect(() => {
+    const editResourceId = searchParams.get('edit');
+    const deleteResourceId = searchParams.get('delete');
+
+    if (editResourceId) {
+      const resourceToEdit = resources.find(r => r.id === editResourceId);
+      if (resourceToEdit) {
+        handleOpenEditResourceDialog(resourceToEdit);
+      }
+      router.replace('/resources', { scroll: false }); // Clear query param
+    } else if (deleteResourceId) {
+      handleOpenRemoveResourceDialog(deleteResourceId);
+      router.replace('/resources', { scroll: false }); // Clear query param
+    }
+  }, [searchParams, resources, router]); // Added resources and router to dependency array
+
+
   const handleTextAttachmentFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > MAX_FILE_SIZE) {
         toast({ title: "File too large", description: `${file.name} exceeds 5MB limit.`, variant: "destructive" });
-        if (fileInputRef.current) fileInputRef.current.value = ""; // Clear the input
+        if (fileInputRef.current) fileInputRef.current.value = ""; 
         return;
       }
       const reader = new FileReader();
@@ -194,7 +215,7 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
     resourceForm.setValue('textAttachment', undefined, { shouldValidate: true });
     resourceForm.setValue('textAttachmentFile', undefined);
     setTextAttachmentPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = ""; // Clear the file input
+    if (fileInputRef.current) fileInputRef.current.value = ""; 
   };
 
 
@@ -233,15 +254,11 @@ export function ResourceHubClient({ initialResources }: ResourceHubClientProps) 
   const handleResourceFormSubmit: SubmitHandler<ResourceFormValues> = (data) => {
     const processedData: Partial<Resource> = {
       ...data,
-      link: data.link || undefined, // Ensure empty string becomes undefined
+      link: data.link || undefined, 
       internalText: data.internalText || undefined,
-      textAttachment: data.textAttachment, // This should be the Attachment object or undefined
+      textAttachment: data.textAttachment,
     };
     
-    // Remove file specific fields not part of Resource model
-    // delete (processedData as any).textAttachmentFile;
-
-
     if (editingResource) {
       setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...processedData, id: editingResource.id } as Resource : r));
       toast({ title: "Resource Updated", description: `"${data.title}" has been updated.` });
