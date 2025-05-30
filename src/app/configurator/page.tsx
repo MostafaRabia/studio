@@ -1,7 +1,7 @@
 
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, UserPlus, UserMinus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ConfiguratorPage() {
@@ -23,6 +23,30 @@ export default function ConfiguratorPage() {
         <p className="text-muted-foreground text-center">
           Application configuration options will be available here.
         </p>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Employee Management</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link href="/employees/new" passHref>
+            <Button variant="outline" className="w-full justify-start text-left h-auto py-3">
+              <UserPlus className="mr-3 h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">Add New Employee</p>
+                <p className="text-xs text-muted-foreground">Go to the form to create a new employee profile.</p>
+              </div>
+            </Button>
+          </Link>
+          <Link href="/employees" passHref>
+            <Button variant="outline" className="w-full justify-start text-left h-auto py-3">
+              <UserMinus className="mr-3 h-5 w-5 text-destructive" />
+               <div>
+                <p className="font-medium">Manage Existing Employees</p>
+                <p className="text-xs text-muted-foreground">View directory to select and manage employees.</p>
+              </div>
+            </Button>
+          </Link>
+        </div>
       </div>
     </>
   );
