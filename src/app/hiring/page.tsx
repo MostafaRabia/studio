@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -29,11 +29,11 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEmployees } from '@/contexts/employee-context'; // Import useEmployees
+import { useEmployees } from '@/contexts/employee-context'; 
 
 const hiringRequestFormSchema = z.object({
   hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }), 
-  department: z.string().min(2, { message: "Department is required." }).max(100),
+  department: z.string().min(1, { message: "Department is required." }).max(100),
   positionName: z.string().min(3, { message: "Position name must be at least 3 characters." }).max(100),
   startingDate: z.date({
     required_error: "Starting date is required.",
@@ -48,7 +48,12 @@ export default function HiringPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
   const { toast } = useToast();
-  const { employees } = useEmployees(); // Get employees from context
+  const { employees } = useEmployees(); 
+
+  const uniqueDepartments = useMemo(() => {
+    const departmentsSet = new Set(employees.map(emp => emp.department).filter(Boolean));
+    return Array.from(departmentsSet).sort();
+  }, [employees]);
 
   const form = useForm<HiringRequestFormValues>({
     resolver: zodResolver(hiringRequestFormSchema),
@@ -67,8 +72,8 @@ export default function HiringPage() {
       title: "Hiring Request Submitted",
       description: `Request for ${data.positionName} by ${data.hiringManagerName} has been submitted.`,
     });
-    setIsDialogOpen(false); // Close the dialog
-    form.reset(); // Reset form fields
+    setIsDialogOpen(false); 
+    form.reset(); 
   };
 
   return (
@@ -124,9 +129,20 @@ export default function HiringPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Department</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Engineering" {...field} />
-                          </FormControl>
+                           <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {uniqueDepartments.map((dept) => (
+                                <SelectItem key={dept} value={dept}>
+                                  {dept}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -173,7 +189,7 @@ export default function HiringPage() {
                                   field.onChange(date);
                                   setIsStartDatePopoverOpen(false);
                                 }}
-                                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} // Disable past dates
+                                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1))} 
                                 initialFocus
                               />
                             </PopoverContent>
