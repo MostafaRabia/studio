@@ -45,12 +45,14 @@ export default function ResourceDetailPage() {
         description={resource.description || "Details for this resource."}
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
-            <Link href={`/resources?edit=${resource.id}`} passHref>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Resource
-              </Button>
-            </Link>
+            {resource.id !== '7' && ( // Conditionally render Edit button
+              <Link href={`/resources?edit=${resource.id}`} passHref>
+                <Button variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Resource
+                </Button>
+              </Link>
+            )}
             {resource.id !== '7' && ( // Conditionally render Delete button
               <Link href={`/resources?delete=${resource.id}`} passHref>
                 <Button variant="destructive" className="bg-destructive hover:bg-destructive/90">
