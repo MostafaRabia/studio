@@ -8,19 +8,44 @@ import type { Resource, Employee } from '@/lib/placeholder-data';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, ExternalLink, FileText, Download, Edit, Trash2, Settings } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Download, Edit, Trash2, Settings, Users, Briefcase, Tv, FolderOpen, PlusSquare, Edit3, Trash, CircleDollarSign, Columns, SlidersHorizontal, ShieldQuestion } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEmployees } from '@/contexts/employee-context';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 interface EmployeeRuleSettings {
-  experimentalFeaturesEnabled: boolean;
-  // Add more rule settings here as needed
+  canViewHierarchyOnly: boolean;
+  canViewAnnouncements: boolean;
+  canAddAnnouncements: boolean;
+  canEditDeleteAnnouncements: boolean;
+  canViewResourceHubOnly: boolean;
+  canAddResource: boolean;
+  canEditDeleteResource: boolean;
+  canViewMyBalance: boolean;
+  canViewTeamBalance: boolean;
+  canViewTeamSalaries: boolean;
+  canAccessConfigurator: boolean;
 }
+
+const allConfigurableRules: Array<{ key: keyof EmployeeRuleSettings; label: string; icon: React.ElementType }> = [
+  { key: 'canViewHierarchyOnly', label: 'View only the hierarchy', icon: Users },
+  { key: 'canViewAnnouncements', label: 'View company announcements', icon: Tv },
+  { key: 'canAddAnnouncements', label: 'Add new announcement', icon: PlusSquare },
+  { key: 'canEditDeleteAnnouncements', label: 'Edit or delete existing announcement', icon: Edit3 },
+  { key: 'canViewResourceHubOnly', label: 'View resource hub only', icon: FolderOpen },
+  { key: 'canAddResource', label: 'Add new resource in resource hub', icon: PlusSquare },
+  { key: 'canEditDeleteResource', label: 'Edit or remove existing resource in resource hub', icon: Trash },
+  { key: 'canViewMyBalance', label: 'View my balance (vacations)', icon: CircleDollarSign },
+  { key: 'canViewTeamBalance', label: 'View team balance (vacations)', icon: Columns },
+  { key: 'canViewTeamSalaries', label: 'View my team salaries page', icon: CircleDollarSign },
+  { key: 'canAccessConfigurator', label: 'Access configurator page', icon: SlidersHorizontal },
+];
+
 
 export default function ResourceDetailPage() {
   const router = useRouter();
@@ -37,11 +62,22 @@ export default function ResourceDetailPage() {
 
   useEffect(() => {
     if (selectedEmployeeId && !employeeRuleSettings[selectedEmployeeId]) {
+      const defaultSettings: EmployeeRuleSettings = {
+        canViewHierarchyOnly: false,
+        canViewAnnouncements: true, // Default to true for viewing
+        canAddAnnouncements: false,
+        canEditDeleteAnnouncements: false,
+        canViewResourceHubOnly: true, // Default to true for viewing
+        canAddResource: false,
+        canEditDeleteResource: false,
+        canViewMyBalance: true, // Default to true for viewing
+        canViewTeamBalance: false,
+        canViewTeamSalaries: false,
+        canAccessConfigurator: false,
+      };
       setEmployeeRuleSettings(prevSettings => ({
         ...prevSettings,
-        [selectedEmployeeId]: {
-          experimentalFeaturesEnabled: false, // Default value
-        }
+        [selectedEmployeeId]: defaultSettings
       }));
     }
   }, [selectedEmployeeId, employeeRuleSettings]);
@@ -50,10 +86,12 @@ export default function ResourceDetailPage() {
     setEmployeeRuleSettings(prevSettings => ({
       ...prevSettings,
       [employeeId]: {
-        ...(prevSettings[employeeId] || { experimentalFeaturesEnabled: false }), // Ensure existing settings are kept
+        ...(prevSettings[employeeId] || {} as EmployeeRuleSettings),
         [ruleName]: value,
       }
     }));
+    // Here you would typically also save this to a backend
+    console.log(`Rule '${ruleName}' for employee ${employeeId} set to ${value}`);
   };
 
 
@@ -111,12 +149,12 @@ export default function ResourceDetailPage() {
               Employee-Specific Rule Configuration
             </CardTitle>
             <CardDescription>
-              Select an employee to view or set rules specific to them.
+              Select an employee to view or set rules specific to them. These settings are illustrative and not connected to application behavior in this prototype.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Select onValueChange={setSelectedEmployeeId} value={selectedEmployeeId || undefined}>
-              <SelectTrigger className="w-full md:w-[300px]">
+              <SelectTrigger className="w-full md:w-[300px] mb-4">
                 <SelectValue placeholder="Select an employee..." />
               </SelectTrigger>
               <SelectContent>
@@ -128,33 +166,34 @@ export default function ResourceDetailPage() {
               </SelectContent>
             </Select>
             
-            {selectedEmployee && (
-              <div className="mt-4 space-y-4">
-                <p className="text-sm text-muted-foreground">
+            {selectedEmployee && employeeRuleSettings[selectedEmployee.id] && (
+              <div className="mt-1 space-y-1">
+                <p className="text-sm text-muted-foreground mb-3">
                   Configuring rules for: <span className="font-medium text-primary">{selectedEmployee.name}</span>
                 </p>
-                
-                <div className="flex items-center space-x-2 p-3 border rounded-md bg-muted/20">
-                  <Switch
-                    id={`experimental-features-${selectedEmployee.id}`}
-                    checked={employeeRuleSettings[selectedEmployee.id]?.experimentalFeaturesEnabled || false}
-                    onCheckedChange={(value) => handleRuleChange(selectedEmployee.id, 'experimentalFeaturesEnabled', value)}
-                  />
-                  <Label htmlFor={`experimental-features-${selectedEmployee.id}`} className="text-sm">
-                    Enable Experimental Features
-                  </Label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-center h-20 border-2 border-dashed rounded-md">
-                  <p className="text-muted-foreground text-center text-sm px-4">
-                    {employeeRuleSettings[selectedEmployee.id]?.experimentalFeaturesEnabled 
-                      ? `${selectedEmployee.name} has experimental features ENABLED.`
-                      : `${selectedEmployee.name} has experimental features DISABLED.`
-                    }
-                    <br/>
-                    More rule configurations specific to {selectedEmployee.name} would appear here.
-                  </p>
-                </div>
+                <ScrollArea className="h-[400px] w-full rounded-md border p-4 bg-muted/20">
+                  <div className="space-y-5">
+                    {allConfigurableRules.map((rule) => {
+                      const IconComponent = rule.icon || ShieldQuestion; // Fallback icon
+                      return (
+                        <div key={rule.key} className="flex items-center justify-between space-x-2 p-3 border-b last:border-b-0 hover:bg-background/50 rounded-md transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <IconComponent className="h-5 w-5 text-muted-foreground" />
+                            <Label htmlFor={`${rule.key}-${selectedEmployee.id}`} className="text-sm cursor-pointer flex-grow">
+                              {rule.label}
+                            </Label>
+                          </div>
+                          <Switch
+                            id={`${rule.key}-${selectedEmployee.id}`}
+                            checked={employeeRuleSettings[selectedEmployee.id!]?.[rule.key] || false}
+                            onCheckedChange={(value) => handleRuleChange(selectedEmployee.id, rule.key, value)}
+                            aria-label={rule.label}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </div>
             )}
             {!selectedEmployee && resource.id === '7' && (
@@ -215,7 +254,12 @@ export default function ResourceDetailPage() {
           )}
 
           {!hasInternalText && !hasTextAttachment && !hasExternalLink && (
-            <p className="text-muted-foreground">This resource does not have any content or an external link configured.</p>
+             <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
+                <p className="text-muted-foreground text-center">
+                  No specific content configured for the general "{resource.title}" resource.
+                  <br /> Select an employee above to configure employee-specific rules.
+                </p>
+              </div>
           )}
         </CardContent>
       </Card>
