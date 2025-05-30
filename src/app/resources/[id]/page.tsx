@@ -111,7 +111,7 @@ export default function ResourceDetailPage() {
       <>
         <PageHeader title="Resource Not Found" description="The resource you are looking for does not exist." />
         <div className="text-center">
-          {/* Removed "Back to Resource Hub" button as per previous request */}
+          {/* Removed "Back to Resource Hub" button */}
         </div>
       </>
     );
@@ -223,71 +223,85 @@ export default function ResourceDetailPage() {
         </Card>
       )}
 
-      <Card className="shadow-lg mb-6">
-        <CardHeader>
-          <CardTitle>{resource.title}</CardTitle>
-          {resource.description && (
-            <CardDescription>{resource.description}</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {hasInternalText && (
-            <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none dark:prose-invert p-4 border rounded-md bg-muted/20">
-              <h3 className="text-lg font-semibold mb-2 border-b pb-2">Content:</h3>
-              <ReactMarkdown>{resource.internalText!}</ReactMarkdown>
-            </div>
-          )}
+      {/* Conditionally render the main resource content card */}
+      {resource.id !== '7' && (
+        <Card className="shadow-lg mb-6">
+          <CardHeader>
+            <CardTitle>{resource.title}</CardTitle>
+            {resource.description && (
+              <CardDescription>{resource.description}</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {hasInternalText && (
+              <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none dark:prose-invert p-4 border rounded-md bg-muted/20">
+                <h3 className="text-lg font-semibold mb-2 border-b pb-2">Content:</h3>
+                <ReactMarkdown>{resource.internalText!}</ReactMarkdown>
+              </div>
+            )}
 
-          {hasTextAttachment && resource.textAttachment && (
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Attachment:</h3>
-              <div className="flex items-center justify-between p-3 border rounded-md bg-secondary/50">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">{resource.textAttachment.name}</span>
-                  <span className="text-xs text-muted-foreground">({(resource.textAttachment.size / 1024).toFixed(1)} KB)</span>
+            {hasTextAttachment && resource.textAttachment && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Attachment:</h3>
+                <div className="flex items-center justify-between p-3 border rounded-md bg-secondary/50">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">{resource.textAttachment.name}</span>
+                    <span className="text-xs text-muted-foreground">({(resource.textAttachment.size / 1024).toFixed(1)} KB)</span>
+                  </div>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={resource.textAttachment.dataUrl} download={resource.textAttachment.name}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Attachment
+                    </a>
+                  </Button>
                 </div>
-                <Button asChild variant="outline" size="sm">
-                  <a href={resource.textAttachment.dataUrl} download={resource.textAttachment.name}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Attachment
+              </div>
+            )}
+
+            {hasExternalLink && resource.link && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">External Link:</h3>
+                <Button asChild variant="default" size="lg">
+                  <a href={resource.link} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Access External Resource
                   </a>
                 </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {hasExternalLink && resource.link && (
-            <div>
-              <h3 className="text-lg font-semibold mb-2">External Link:</h3>
-              <Button asChild variant="default" size="lg">
-                <a href={resource.link} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Access External Resource
-                </a>
-              </Button>
-            </div>
-          )}
-
-          {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id !== '7' && (
-             <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
-                <p className="text-muted-foreground text-center">
-                  No specific content configured for this resource.
-                </p>
-              </div>
-          )}
-           {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id === '7' && (
-             <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
-                <p className="text-muted-foreground text-center">
-                  No general content for "Employee Rules". 
-                  <br /> Select an employee above to configure their specific rules.
-                </p>
-              </div>
-          )}
-        </CardContent>
-      </Card>
+            {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id !== '7' && (
+              <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
+                  <p className="text-muted-foreground text-center">
+                    No specific content configured for this resource.
+                  </p>
+                </div>
+            )}
+            {/* This specific fallback for id === '7' is no longer needed if the whole card is hidden */}
+            {/* {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id === '7' && (
+              <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
+                  <p className="text-muted-foreground text-center">
+                    No general content for "Employee Rules". 
+                    <br /> Select an employee above to configure their specific rules.
+                  </p>
+                </div>
+            )} */}
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Fallback message if it's resource '7' AND no employee is selected (to guide the user) */}
+      {/* This might be redundant if the primary interaction is clear from the config card */}
+      {resource.id === '7' && !selectedEmployee && (
+        <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
+            <p className="text-muted-foreground text-center">
+              No general content to display for "Employee Rules".
+              <br /> Select an employee above to configure their specific rules.
+            </p>
+          </div>
+      )}
     </>
   );
 }
-
     
