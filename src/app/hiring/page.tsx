@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEmployees } from '@/contexts/employee-context'; // Import useEmployees
 
 const hiringRequestFormSchema = z.object({
-  hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }), // Changed min to 1 as it's a selection
+  hiringManagerName: z.string().min(1, { message: "Please select a hiring manager." }), 
   department: z.string().min(2, { message: "Department is required." }).max(100),
   positionName: z.string().min(3, { message: "Position name must be at least 3 characters." }).max(100),
   startingDate: z.date({
@@ -80,7 +80,7 @@ export default function HiringPage() {
           <div className="flex gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setIsDialogOpen(true)}>
+                <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   New Hiring Request
                 </Button>
@@ -152,6 +152,7 @@ export default function HiringPage() {
                           <FormLabel>Starting Date</FormLabel>
                            <Popover open={isStartDatePopoverOpen} onOpenChange={setIsStartDatePopoverOpen} modal={false}>
                             <PopoverTrigger asChild>
+                              <FormControl>
                                 <Button
                                   variant={"outline"}
                                   className={cn(
@@ -162,6 +163,7 @@ export default function HiringPage() {
                                   <CalendarIcon className="mr-2 h-4 w-4" />
                                   {field.value ? format(field.value, "PPP") : <span>Pick a start date</span>}
                                 </Button>
+                              </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                               <Calendar
