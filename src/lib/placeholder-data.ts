@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { FileText, ExternalLink, ShieldCheck, Handshake } from 'lucide-react';
+import { FileText, ExternalLink, ShieldCheck, Handshake, BookOpen } from 'lucide-react';
 import Image from 'next/image';
 
 export interface Attachment {
@@ -50,7 +50,7 @@ export interface Resource {
   description?: string;
   link?: string; // Made optional
   category: string;
-  iconName: string;
+  iconName: string; // Changed from LucideIcon to string
   dataAiHint?: string;
   internalText?: string; // New field for internal text content
   textAttachment?: Attachment; // New field for attachment related to internal text
@@ -61,6 +61,7 @@ export const employees: Employee[] = [
     id: '1',
     name: 'Alice Wonderland',
     avatarUrl: 'https://placehold.co/128x128.png',
+    avatarDataUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'woman portrait',
     department: 'Engineering',
     jobTitle: 'Software Engineer',
@@ -78,6 +79,7 @@ export const employees: Employee[] = [
     id: '2',
     name: 'Bob The Builder',
     avatarUrl: 'https://placehold.co/128x128.png',
+    avatarDataUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'man portrait',
     department: 'Product',
     jobTitle: 'Product Manager',
@@ -91,6 +93,7 @@ export const employees: Employee[] = [
     id: '3',
     name: 'Carol Danvers',
     avatarUrl: 'https://placehold.co/128x128.png',
+    avatarDataUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'woman smiling',
     department: 'Marketing',
     jobTitle: 'Marketing Lead',
@@ -103,6 +106,7 @@ export const employees: Employee[] = [
     id: '4',
     name: 'David Copperfield',
     avatarUrl: 'https://placehold.co/128x128.png',
+    avatarDataUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'man professional',
     department: 'Sales',
     jobTitle: 'Sales Executive',
@@ -115,6 +119,7 @@ export const employees: Employee[] = [
     id: '5',
     name: 'Eve Harrington',
     avatarUrl: 'https://placehold.co/128x128.png',
+    avatarDataUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'woman face',
     department: 'Human Resources',
     jobTitle: 'HR Specialist',
@@ -127,6 +132,7 @@ export const employees: Employee[] = [
     id: '6',
     name: 'Frank Castle',
     avatarUrl: 'https://placehold.co/128x128.png',
+    avatarDataUrl: 'https://placehold.co/128x128.png',
     dataAiHint: 'man serious',
     department: 'Operations',
     jobTitle: 'Operations Manager',
@@ -172,9 +178,8 @@ export const resources: Resource[] = [
     id: '1',
     title: 'Employee Handbook',
     description: 'Comprehensive guide to company policies and procedures.',
-    link: '#',
     category: 'Company Policies',
-    iconName: 'FileText',
+    iconName: 'FileText', // Changed from component to string
     dataAiHint: 'document policy',
     internalText: 'This is the main employee handbook. Please read it carefully. It covers topics such as code of conduct, leave policies, and more.',
   },
@@ -184,7 +189,7 @@ export const resources: Resource[] = [
     description: 'Access your health insurance, retirement plans, and other benefits.',
     link: 'https://example.com/benefits', // Example external link
     category: 'Benefits',
-    iconName: 'ShieldCheck',
+    iconName: 'ShieldCheck', // Changed from component to string
     dataAiHint: 'health benefits',
   },
   {
@@ -193,7 +198,7 @@ export const resources: Resource[] = [
     description: 'Find help for common IT issues and request support.',
     link: 'https://example.com/it-support', // Example external link
     category: 'IT & Support',
-    iconName: 'ExternalLink',
+    iconName: 'ExternalLink', // Changed from component to string
     dataAiHint: 'tech support',
   },
   {
@@ -201,29 +206,36 @@ export const resources: Resource[] = [
     title: 'Performance Review Guidelines',
     description: 'Information on the performance review process.',
     category: 'Career Development',
-    iconName: 'Handshake',
+    iconName: 'Handshake', // Changed from component to string
     dataAiHint: 'career growth',
     internalText: 'The annual performance review cycle begins on November 1st. Ensure all self-assessments are submitted by October 15th. Manager reviews are due by November 15th.',
-    // Example of a textAttachment (though dataUrl would be very long in reality)
-    // textAttachment: { id: 'att1', name: 'Review_Process.pdf', type: 'application/pdf', dataUrl: 'data:application/pdf;base64,JVBERi0xLjQKJ...', size: 120 * 1024 }
   },
    {
     id: '5',
     title: 'Code of Conduct',
     description: 'Our principles for ethical behavior and professional conduct.',
-    link: '#', // Can be internal if text is provided
     category: 'Company Policies',
-    iconName: 'FileText',
+    iconName: 'BookOpen', // Changed from component to string
     dataAiHint: 'ethics conduct',
-    internalText: 'All employees are expected to adhere to the highest standards of professional conduct...',
+    internalText: 'All employees are expected to adhere to the highest standards of professional conduct. This includes treating colleagues with respect, maintaining confidentiality, and avoiding conflicts of interest. Please refer to the full document for detailed guidelines.',
   },
   {
     id: '6',
-    title: 'Vacation Request Form (External)',
+    title: 'Vacation Request Portal',
     description: 'Submit your time-off requests here using the external portal.',
     link: 'https://example.com/vacation-request', // Clearly an external link
     category: 'Benefits',
-    iconName: 'ExternalLink',
+    iconName: 'ExternalLink', // Changed from component to string
     dataAiHint: 'travel vacation',
   },
+  {
+    id: '7',
+    title: 'Employee Rules',
+    description: 'Key rules and regulations all employees must follow.',
+    category: 'Company Policies',
+    iconName: 'FileText',
+    dataAiHint: 'rules regulations',
+    internalText: '## General Employee Rules\n\n1.  **Attendance:** Employees are expected to be punctual and adhere to their scheduled work hours.\n2.  **Dress Code:** Maintain a professional appearance appropriate for your role and work environment.\n3.  **Use of Company Property:** Company equipment and resources are to be used for business purposes. Personal use should be minimal and not interfere with work duties.\n4.  **Confidentiality:** Protect sensitive company and client information at all times.\n5.  **Workplace Conduct:** Treat all colleagues, clients, and visitors with respect and professionalism. Harassment or discrimination will not be tolerated.\n\n*This is a summary. Please refer to the full Employee Handbook for comprehensive details.*',
+  },
 ];
+
