@@ -7,8 +7,8 @@ import { resources as allPlaceholderResources } from '@/lib/placeholder-data';
 import type { Resource, Employee } from '@/lib/placeholder-data';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, ExternalLink, FileText, Download, Edit, Trash2, Settings, Users, Briefcase, Tv, FolderOpen, PlusSquare, Edit3, Trash, CircleDollarSign, Columns, SlidersHorizontal, ShieldQuestion } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { ArrowLeft, ExternalLink, FileText, Download, Edit, Trash2, Settings, Users, Briefcase, Tv, FolderOpen, PlusSquare, Edit3, Trash, CircleDollarSign, Columns, SlidersHorizontal, ShieldQuestion, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +16,7 @@ import { useEmployees } from '@/contexts/employee-context';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from "@/hooks/use-toast";
 
 
 interface EmployeeRuleSettings {
@@ -51,6 +52,7 @@ export default function ResourceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
+  const { toast } = useToast();
 
   const resource = allPlaceholderResources.find(r => r.id === id);
 
@@ -64,13 +66,13 @@ export default function ResourceDetailPage() {
     if (selectedEmployeeId && !employeeRuleSettings[selectedEmployeeId]) {
       const defaultSettings: EmployeeRuleSettings = {
         canViewHierarchyOnly: false,
-        canViewAnnouncements: true, // Default to true for viewing
+        canViewAnnouncements: true, 
         canAddAnnouncements: false,
         canEditDeleteAnnouncements: false,
-        canViewResourceHubOnly: true, // Default to true for viewing
+        canViewResourceHubOnly: true, 
         canAddResource: false,
         canEditDeleteResource: false,
-        canViewMyBalance: true, // Default to true for viewing
+        canViewMyBalance: true, 
         canViewTeamBalance: false,
         canViewTeamSalaries: false,
         canAccessConfigurator: false,
@@ -90,8 +92,17 @@ export default function ResourceDetailPage() {
         [ruleName]: value,
       }
     }));
-    // Here you would typically also save this to a backend
-    console.log(`Rule '${ruleName}' for employee ${employeeId} set to ${value}`);
+  };
+
+  const handleSaveSettings = () => {
+    if (selectedEmployee) {
+      toast({
+        title: "Settings Saved",
+        description: `Rule configurations for ${selectedEmployee.name} have been notionally saved.`,
+      });
+      // In a real app, this is where you'd send data to a backend.
+      console.log("Saving settings for employee:", selectedEmployee.id, employeeRuleSettings[selectedEmployee.id]);
+    }
   };
 
 
@@ -100,10 +111,7 @@ export default function ResourceDetailPage() {
       <>
         <PageHeader title="Resource Not Found" description="The resource you are looking for does not exist." />
         <div className="text-center">
-          <Button variant="outline" onClick={() => router.push('/resources')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Resource Hub
-          </Button>
+          {/* Removed "Back to Resource Hub" button as per previous request */}
         </div>
       </>
     );
@@ -204,6 +212,14 @@ export default function ResourceDetailPage() {
               </div>
             )}
           </CardContent>
+          {selectedEmployee && resource.id === '7' && (
+            <CardFooter className="border-t pt-4 mt-4 flex justify-end">
+              <Button onClick={handleSaveSettings}>
+                <Save className="mr-2 h-4 w-4" />
+                Save Settings
+              </Button>
+            </CardFooter>
+          )}
         </Card>
       )}
 
@@ -253,11 +269,18 @@ export default function ResourceDetailPage() {
             </div>
           )}
 
-          {!hasInternalText && !hasTextAttachment && !hasExternalLink && (
+          {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id !== '7' && (
              <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
                 <p className="text-muted-foreground text-center">
-                  No specific content configured for the general "{resource.title}" resource.
-                  <br /> Select an employee above to configure employee-specific rules.
+                  No specific content configured for this resource.
+                </p>
+              </div>
+          )}
+           {!hasInternalText && !hasTextAttachment && !hasExternalLink && resource.id === '7' && (
+             <div className="flex items-center justify-center h-32 border-2 border-dashed rounded-md">
+                <p className="text-muted-foreground text-center">
+                  No general content for "Employee Rules". 
+                  <br /> Select an employee above to configure their specific rules.
                 </p>
               </div>
           )}
@@ -266,3 +289,5 @@ export default function ResourceDetailPage() {
     </>
   );
 }
+
+    
