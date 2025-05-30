@@ -14,7 +14,8 @@ interface EmployeeHierarchyNodeProps {
 }
 
 export function EmployeeHierarchyNode({ employee, allEmployees }: EmployeeHierarchyNodeProps) {
-  const directReports = allEmployees.filter(emp => employee.directReports?.includes(emp.id));
+  // Dynamically find direct reports
+  const directReports = allEmployees.filter(emp => emp.reportsTo?.includes(employee.id));
   const displayAvatarSrc = employee.avatarDataUrl || employee.avatarUrl;
 
   return (
@@ -81,4 +82,3 @@ export function EmployeeHierarchyNode({ employee, allEmployees }: EmployeeHierar
     </div>
   );
 }
-
