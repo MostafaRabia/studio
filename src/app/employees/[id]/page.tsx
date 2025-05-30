@@ -90,13 +90,20 @@ const allConfigurableFields = [
 
 type FieldKey = typeof allConfigurableFields[number]['key'];
 
-function MiniEmployeeNode({ employee, isCurrent }: { employee: Employee; isCurrent?: boolean }) {
+interface MiniEmployeeNodeProps {
+  employee: Employee;
+  isCurrent?: boolean;
+  isDottedStyle?: boolean; 
+}
+
+function MiniEmployeeNode({ employee, isCurrent, isDottedStyle }: MiniEmployeeNodeProps) {
   const displayAvatarSrc = employee.avatarDataUrl || employee.avatarUrl;
   return (
     <Link href={`/employees/${employee.id}`} passHref>
       <div className={cn(
         "flex flex-col items-center p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow min-w-[150px] max-w-[180px] bg-card cursor-pointer",
-        isCurrent && "border-primary ring-1 ring-primary"
+        isCurrent && "border-primary ring-1 ring-primary",
+        isDottedStyle && "border-dashed border-muted-foreground" // Apply dotted style if true
       )}>
         <Avatar className="h-12 w-12 mb-2">
           {displayAvatarSrc ? (
@@ -139,6 +146,7 @@ export default function EmployeeProfilePage() {
 
   const managers = useMemo(() => {
     if (!employee || !employee.reportsTo) return [];
+    // The order of managers is preserved from employee.reportsTo
     return employee.reportsTo.map(managerId => employees.find(e => e.id === managerId)).filter(Boolean) as Employee[];
   }, [employee, employees]);
 
@@ -325,7 +333,13 @@ export default function EmployeeProfilePage() {
               <div className="flex flex-col items-center space-y-2 w-full">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Managed By</p>
                 <div className="flex flex-row flex-wrap justify-center gap-4">
-                  {managers.map(manager => <MiniEmployeeNode key={manager.id} employee={manager} />)}
+                  {managers.map((manager, index) => (
+                    <MiniEmployeeNode 
+                      key={manager.id} 
+                      employee={manager} 
+                      isDottedStyle={index > 0} // Apply dotted style to secondary managers
+                    />
+                  ))}
                 </div>
                 <div className="h-6 w-px bg-border my-1"></div> {/* Connector Line */}
               </div>
