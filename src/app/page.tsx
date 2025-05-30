@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Megaphone, HelpCircle, Library, ArrowRight } from 'lucide-react';
+import { Users, Megaphone, HelpCircle, Library, ArrowRight, LineChart as LineChartIcon } from 'lucide-react';
 
 const features = [
   {
@@ -32,6 +32,13 @@ const features = [
     href: "/resources",
     icon: Library,
     dataAiHint: "knowledge base",
+  },
+  {
+    title: "Salary & Headcount Report",
+    description: "View trends in total salaries, employee count, and average salary.",
+    href: "/reports/salary-headcount",
+    icon: LineChartIcon,
+    dataAiHint: "financial analytics",
   },
 ];
 

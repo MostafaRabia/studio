@@ -27,7 +27,7 @@ const menuItems = [
   { href: "/vacations", label: "Vacations", icon: Plane },
   { href: "/salaries", label: "Salaries", icon: DollarSign },
   { href: "/hiring", label: "Hiring", icon: ClipboardList },
-  { href: "/reports/salary-headcount", label: "Salary Report", icon: LineChartIcon }, // New Report Link
+  // { href: "/reports/salary-headcount", label: "Salary Report", icon: LineChartIcon }, // Removed Report Link from here
   { href: "/configurator", label: "Configurator", icon: SlidersHorizontal },
 ];
 
