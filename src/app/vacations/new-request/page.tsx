@@ -3,7 +3,7 @@
 
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListChecks } from 'lucide-react';
 
 interface MyVacationRequest {
   id: string;
@@ -31,25 +30,44 @@ interface MyVacationRequest {
   status: 'Pending' | 'Approved' | 'Rejected';
 }
 
-// Mock data - ensure fields align with new column order logic in TableCell
 const initialMockRequests: MyVacationRequest[] = [
   {
     id: 'req1',
-    startDate: new Date('2024-08-01'),
-    endDate: new Date('2024-08-05'),
+    startDate: new Date('2024-08-15'),
+    endDate: new Date('2024-08-19'),
     numberOfDays: 5,
     vacationType: 'Annual Leave',
-    submittingDate: new Date('2024-07-15'),
+    submittingDate: new Date('2024-07-20'),
     approvedFrom: 'Bob The Builder',
     status: 'Approved',
   },
   {
     id: 'req2',
-    startDate: new Date('2024-09-10'),
-    endDate: new Date('2024-09-12'),
+    startDate: new Date('2024-09-02'),
+    endDate: new Date('2024-09-04'),
     numberOfDays: 3,
     vacationType: 'Sick Leave',
-    submittingDate: new Date('2024-09-09'),
+    submittingDate: new Date('2024-08-28'),
+    approvedFrom: 'N/A',
+    status: 'Pending',
+  },
+  {
+    id: 'req3',
+    startDate: new Date('2024-07-10'),
+    endDate: new Date('2024-07-10'),
+    numberOfDays: 1,
+    vacationType: 'Personal Day',
+    submittingDate: new Date('2024-07-01'),
+    approvedFrom: 'Bob The Builder',
+    status: 'Rejected',
+  },
+  {
+    id: 'req4',
+    startDate: new Date('2024-10-21'),
+    endDate: new Date('2024-10-25'),
+    numberOfDays: 5,
+    vacationType: 'Annual Leave',
+    submittingDate: new Date('2024-09-15'),
     status: 'Pending',
   },
 ];
