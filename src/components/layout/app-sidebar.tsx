@@ -83,12 +83,7 @@ export function AppSidebar({ toggleChatPanel }: AppSidebarProps) {
               <span>Notifications</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Settings", side: "right", align: "center" }}>
-              <Settings />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {/* Settings button removed */}
           <SidebarMenuItem>
             <SidebarMenuButton tooltip={{ children: "Logout", side: "right", align: "center" }}>
               <LogOut />
