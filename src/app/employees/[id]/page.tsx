@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { 
   Mail, Phone, Briefcase, Building, UserCircle, ArrowLeft, Fingerprint, 
-  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download, Eye, Users2
+  Smartphone, Printer, Users, UserCheck, CalendarDays, UserCog, Edit, Paperclip, FileText, Download, Eye, Users2, BookText
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+
 
 interface DetailItemProps {
   icon: React.ElementType;
@@ -82,6 +84,7 @@ const allConfigurableFields = [
   { key: 'hiredBy', label: 'Hired By', icon: UserCog },
   { key: 'reportsTo', label: 'Reports To', icon: Users },
   { key: 'directReports', label: 'Direct Reports', icon: UserCheck },
+  { key: 'jobDescription', label: 'Job Description Section', icon: BookText },
   { key: 'attachments', label: 'Attachments Section', icon: Paperclip },
 ] as const;
 
@@ -276,6 +279,22 @@ export default function EmployeeProfilePage() {
           </CardContent>
         </Card>
 
+        {fieldVisibility.jobDescription && employee.jobDescription && (
+          <Card className="md:col-span-3 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BookText className="mr-2 h-5 w-5" />
+                Job Description & Responsibilities
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none dark:prose-invert p-4 border rounded-md bg-muted/20">
+                 <ReactMarkdown>{employee.jobDescription}</ReactMarkdown>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {fieldVisibility.attachments && employee.attachments && employee.attachments.length > 0 && (
           <Card className="md:col-span-3 shadow-lg">
             <CardHeader>
@@ -333,3 +352,4 @@ export default function EmployeeProfilePage() {
     </>
   );
 }
+

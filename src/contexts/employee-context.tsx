@@ -38,6 +38,7 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
       hiringDate: employeeData.hiringDate ? new Date(employeeData.hiringDate).toISOString() : undefined,
       hiredBy: employeeData.hiredBy,
       attachments: employeeData.attachments || [],
+      jobDescription: employeeData.jobDescription || "",
     };
     setEmployees((prevEmployees) => {
       const updatedEmployees = [newEmployee, ...prevEmployees];
@@ -79,6 +80,7 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
               hiringDate: employeeData.hiringDate ? new Date(employeeData.hiringDate).toISOString() : emp.hiringDate,
               hiredBy: employeeData.hiredBy,
               attachments: employeeData.attachments || emp.attachments || [],
+              jobDescription: employeeData.jobDescription || emp.jobDescription,
             }
           : emp
       )

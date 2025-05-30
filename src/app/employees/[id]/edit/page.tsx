@@ -20,28 +20,53 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserCog, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, ArrowLeft, UploadCloud, UserCircle, Paperclip, FileText, Trash2 } from "lucide-react";
+import { CalendarIcon, Save, UserCog, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, ArrowLeft, UploadCloud, UserCircle, Paperclip, FileText, Trash2, BookText } from "lucide-react";
 import type { Attachment } from '@/lib/placeholder-data';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useEmployees } from "@/contexts/employee-context";
 import { useToast } from "@/hooks/use-toast";
-import type { NewEmployeeFormValues } from '@/app/employees/new/page'; 
+import type { NewEmployeeFormValues as BaseEmployeeFormValues } from '@/app/employees/new/page'; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Schema is imported via NewEmployeeFormValues type, ensure it includes attachments
-// const employeeFormSchema is implicitly defined by NewEmployeeFormValues
+// Extend base schema to include jobDescription for edit page if not already universally included
+const editEmployeeFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
+  position: z.string().min(2, { message: "Position must be at least 2 characters." }).max(100),
+  department: z.string().min(1, { message: "Department is required." }).max(100),
+  idNumber: z.string().min(1, { message: "ID number is required." }).max(50),
+  email: z.string().email({ message: "Invalid email address." }).min(5).max(100),
+  officeLocation: z.string().max(100).optional(),
+  mobile: z.string().optional(),
+  phone: z.string().optional(),
+  fax: z.string().optional().refine(val => !val || /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(val), { message: "Invalid fax number format." }),
+  reportsTo: z.array(z.string()).optional().default([]), 
+  directReports: z.array(z.string()).optional().default([]),
+  hiringDate: z.date().optional(), // Optional on edit, but could be required by logic
+  hiredBy: z.string().max(100).optional(),
+  avatarDataUrl: z.string().optional(), 
+  attachments: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
+    dataUrl: z.string(),
+    size: z.number(),
+  })).optional().default([]),
+  jobDescription: z.string().max(2000, "Job description must be 2000 characters or less.").optional(),
+});
+
+export type EditEmployeeFormValues = z.infer<typeof editEmployeeFormSchema>;
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/gif", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-
 
 export default function EditEmployeePage() {
   const router = useRouter();
@@ -53,8 +78,8 @@ export default function EditEmployeePage() {
 
   const employeeToEdit = employees.find(emp => emp.id === employeeId);
 
-  const form = useForm<NewEmployeeFormValues>({
-    // resolver: zodResolver(employeeFormSchema) // This now comes from NewEmployeeFormValues
+  const form = useForm<EditEmployeeFormValues>({ // Use EditEmployeeFormValues
+    resolver: zodResolver(editEmployeeFormSchema), 
     defaultValues: { 
       name: "",
       position: "",
@@ -71,6 +96,7 @@ export default function EditEmployeePage() {
       hiredBy: "",
       avatarDataUrl: "",
       attachments: [],
+      jobDescription: "",
     },
   });
 
@@ -92,6 +118,7 @@ export default function EditEmployeePage() {
         hiredBy: employeeToEdit.hiredBy || "",
         avatarDataUrl: employeeToEdit.avatarDataUrl || "",
         attachments: employeeToEdit.attachments || [],
+        jobDescription: employeeToEdit.jobDescription || "",
       });
       if (employeeToEdit.avatarDataUrl) {
         setImagePreview(employeeToEdit.avatarDataUrl);
@@ -123,11 +150,6 @@ export default function EditEmployeePage() {
             resolve(null);
             return;
           }
-          // if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-          //   toast({ title: "Invalid file type", description: `${file.name} is not an allowed file type.`, variant: "destructive" });
-          //   resolve(null);
-          //   return;
-          // }
 
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -163,13 +185,14 @@ export default function EditEmployeePage() {
   };
 
 
-  const onSubmit: SubmitHandler<NewEmployeeFormValues> = (data) => {
+  const onSubmit: SubmitHandler<EditEmployeeFormValues> = (data) => { // Use EditEmployeeFormValues
     if (!employeeId || typeof employeeId !== 'string') {
         toast({ title: "Error", description: "Employee ID is missing.", variant: "destructive" });
         return;
     }
     console.log("Updated Employee Data:", data);
-    updateEmployee(employeeId as string, data);
+    // Ensure the updateEmployee function in context can handle EditEmployeeFormValues or cast appropriately
+    updateEmployee(employeeId as string, data as BaseEmployeeFormValues); // May need casting if types diverge
     toast({
       title: "Employee Updated",
       description: `${data.name}'s profile has been successfully updated.`,
@@ -182,14 +205,14 @@ export default function EditEmployeePage() {
     return selectedIds
       .map(id => employees.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
-  }, [form.watch('reportsTo'), employees]);
+  }, [form, employees]); // form.watch('reportsTo') was correct
 
   const selectedDirectReportsNames = React.useMemo(() => {
     const selectedIds = form.watch('directReports') || [];
     return selectedIds
       .map(id => employees.find(emp => emp.id === id)?.name)
       .filter(name => !!name) as string[];
-  }, [form.watch('directReports'), employees]);
+  }, [form, employees]); // form.watch('directReports') was correct
 
   const currentAttachments = form.watch('attachments') || [];
 
@@ -414,6 +437,28 @@ export default function EditEmployeePage() {
                 )}
               />
               </div>
+
+              <FormField
+                control={form.control}
+                name="jobDescription"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <BookText className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Job Description & Responsibilities
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter the job description and key responsibilities..."
+                        rows={5}
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

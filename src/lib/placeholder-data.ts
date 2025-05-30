@@ -32,6 +32,7 @@ export interface Employee {
   hiringDate?: string; // Store as ISO string for consistency
   hiredBy?: string;
   attachments?: Attachment[];
+  jobDescription?: string; // New field
 }
 
 export interface Announcement {
@@ -74,6 +75,7 @@ export const employees: Employee[] = [
     hiredBy: 'Bob The Builder',
     reportsTo: ['2'], // Bob The Builder's ID
     attachments: [],
+    jobDescription: 'Develops and maintains software applications. Collaborates with the product team to define new features and ensure technical feasibility. Writes clean, scalable, and well-documented code. Participates in code reviews and contributes to a high-quality codebase.',
   },
   {
     id: '2',
@@ -88,6 +90,7 @@ export const employees: Employee[] = [
     idNumber: 'EMP002',
     directReports: ['1'], // Alice Wonderland's ID
     attachments: [],
+    jobDescription: 'Defines product vision, strategy, and roadmap. Gathers and prioritizes product and customer requirements. Works closely with engineering, sales, marketing, and support to ensure revenue and customer satisfaction goals are met.',
   },
   {
     id: '3',
@@ -101,6 +104,7 @@ export const employees: Employee[] = [
     phone: '555-0103',
     idNumber: 'EMP003',
     attachments: [],
+    jobDescription: 'Leads the marketing team in developing and executing marketing strategies. Manages campaigns, branding, and public relations.',
   },
   {
     id: '4',
@@ -114,6 +118,7 @@ export const employees: Employee[] = [
     phone: '555-0104',
     idNumber: 'EMP004',
     attachments: [],
+    jobDescription: 'Drives sales and manages client accounts. Identifies new business opportunities and builds strong customer relationships.',
   },
     {
     id: '5',
@@ -127,6 +132,7 @@ export const employees: Employee[] = [
     phone: '555-0105',
     idNumber: 'EMP005',
     attachments: [],
+    jobDescription: 'Manages recruitment, employee relations, benefits administration, and HR policies. Ensures compliance with labor laws.',
   },
   {
     id: '6',
@@ -140,6 +146,7 @@ export const employees: Employee[] = [
     phone: '555-0106',
     idNumber: 'EMP006',
     attachments: [],
+    jobDescription: 'Oversees daily operations, supply chain management, and process optimization. Ensures operational efficiency and quality standards.',
   },
 ];
 

@@ -20,13 +20,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, UploadCloud, UserCircle, Paperclip, FileText } from "lucide-react";
+import { CalendarIcon, Save, UserPlus, X, AtSign, Building, Fingerprint, Users, ChevronDown, UserCheck, Briefcase, UploadCloud, UserCircle, Paperclip, FileText, BookText } from "lucide-react";
 import type { Attachment } from '@/lib/placeholder-data';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -62,6 +63,7 @@ const newEmployeeFormSchema = z.object({
   hiredBy: z.string().max(100).optional(),
   avatarDataUrl: z.string().optional(), 
   attachments: z.array(attachmentSchema).optional().default([]),
+  jobDescription: z.string().max(2000, "Job description must be 2000 characters or less.").optional(),
 });
 
 export type NewEmployeeFormValues = z.infer<typeof newEmployeeFormSchema>;
@@ -89,6 +91,7 @@ export default function NewEmployeePage() {
       hiredBy: "",
       avatarDataUrl: "",
       attachments: [],
+      jobDescription: "",
     },
   });
 
@@ -334,6 +337,27 @@ export default function NewEmployeePage() {
                 )}
               />
               </div>
+
+              <FormField
+                control={form.control}
+                name="jobDescription"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <BookText className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Job Description & Responsibilities
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter the job description and key responsibilities..."
+                        rows={5}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
