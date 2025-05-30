@@ -17,8 +17,6 @@ export default function ResourceDetailPage() {
   const params = useParams();
   const { id } = params;
 
-  // In a real app, you'd fetch the resource from a context or API
-  // For this prototype, we find it in the static placeholder data
   const resource = allPlaceholderResources.find(r => r.id === id);
 
   if (!resource) {
@@ -34,6 +32,10 @@ export default function ResourceDetailPage() {
       </>
     );
   }
+
+  const hasInternalText = resource.internalText && resource.internalText.trim() !== '';
+  const hasTextAttachment = !!resource.textAttachment;
+  const hasExternalLink = !!resource.link;
 
   return (
     <>
@@ -69,15 +71,14 @@ export default function ResourceDetailPage() {
           )}
         </CardHeader>
         <CardContent className="space-y-6">
-          {resource.internalText && (
+          {hasInternalText && (
             <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none dark:prose-invert p-4 border rounded-md bg-muted/20">
               <h3 className="text-lg font-semibold mb-2 border-b pb-2">Content:</h3>
-              {/* Using ReactMarkdown for basic markdown rendering. For more complex HTML, consider a safer rendering method. */}
-              <ReactMarkdown>{resource.internalText}</ReactMarkdown>
+              <ReactMarkdown>{resource.internalText!}</ReactMarkdown>
             </div>
           )}
 
-          {resource.textAttachment && (
+          {hasTextAttachment && resource.textAttachment && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Attachment:</h3>
               <div className="flex items-center justify-between p-3 border rounded-md bg-secondary/50">
@@ -96,7 +97,7 @@ export default function ResourceDetailPage() {
             </div>
           )}
 
-          {resource.link && (
+          {hasExternalLink && resource.link && (
             <div>
               <h3 className="text-lg font-semibold mb-2">External Link:</h3>
               <Button asChild variant="default" size="lg">
@@ -108,7 +109,7 @@ export default function ResourceDetailPage() {
             </div>
           )}
 
-          {!resource.internalText && !resource.textAttachment && !resource.link && (
+          {!hasInternalText && !hasTextAttachment && !hasExternalLink && (
             <p className="text-muted-foreground">This resource does not have any content or an external link configured.</p>
           )}
         </CardContent>
