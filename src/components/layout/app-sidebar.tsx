@@ -16,12 +16,12 @@ import {
 import { AppLogo } from "./app-logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork, Bell, Plane, DollarSign, ClipboardList } from "lucide-react"; // Added ClipboardList
+import { LayoutDashboard, Users, Megaphone, HelpCircle, Library, Settings, LogOut, GitFork, Bell, Plane, DollarSign, ClipboardList, MessageSquare } from "lucide-react"; // Added MessageSquare
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/employees", label: "Employees", icon: Users },
-  { href: "/employees/hierarchy", label: "Hierarchy", icon: GitFork },
+  { href: "/employees/hierarchy", label: "Hierarchy", icon: Users }, // Changed GitFork to Users for consistency
   { href: "/announcements", label: "Announcements", icon: Megaphone },
   { href: "/faq", label: "AI FAQ", icon: HelpCircle },
   { href: "/resources", label: "Resources", icon: Library },
@@ -30,7 +30,11 @@ const menuItems = [
   { href: "/hiring", label: "Hiring", icon: ClipboardList },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  toggleChatPanel: () => void;
+}
+
+export function AppSidebar({ toggleChatPanel }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -63,6 +67,15 @@ export function AppSidebar() {
       <Separator className="my-2" />
       <SidebarFooter className="p-2">
         <SidebarMenu>
+           <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={toggleChatPanel}
+              tooltip={{ children: "Chat", side: "right", align: "center" }}
+            >
+              <MessageSquare />
+              <span>Chat</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
            <SidebarMenuItem>
             <SidebarMenuButton tooltip={{ children: "Notifications", side: "right", align: "center" }}>
               <Bell />
