@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState } from 'react';
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Table,
   TableHeader,
@@ -25,12 +25,13 @@ interface MyVacationRequest {
   startDate: Date;
   endDate: Date;
   numberOfDays: number;
-  vacationType: string;
+  vacationType: string; // Still in data, but column removed from table
   submittingDate: Date;
   approvedFrom?: string; // Manager's name or ID
   status: 'Pending' | 'Approved' | 'Rejected';
 }
 
+// Mock data - ensure fields align with new column order logic in TableCell
 const initialMockRequests: MyVacationRequest[] = [
   {
     id: 'req1',
@@ -55,6 +56,7 @@ const initialMockRequests: MyVacationRequest[] = [
 
 export default function NewVacationRequestPage() {
   const [myRequests, setMyRequests] = useState<MyVacationRequest[]>(initialMockRequests);
+  // Form and dialog logic is currently simplified for table visibility debugging
 
   return (
     <>
@@ -69,7 +71,7 @@ export default function NewVacationRequestPage() {
                 Back to Vacations
               </Button>
             </Link>
-            {/* Placeholder for New Request Button that would open a dialog */}
+            {/* Placeholder for New Request Button that would open a dialog - currently simplified */}
             {/* <Button onClick={() => console.log("New Request Dialog would open")}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Request Time Off
@@ -92,23 +94,21 @@ export default function NewVacationRequestPage() {
               <TableCaption>A list of your submitted vacation requests.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead className="text-center">Days</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Manager</TableHead>
+                  <TableHead>Request Date</TableHead>
+                  <TableHead className="text-center">Number of Days</TableHead>
+                  <TableHead>Starts From</TableHead>
+                  <TableHead>End At</TableHead>
+                  <TableHead>Approval By</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {myRequests.map((request) => (
                   <TableRow key={request.id}>
+                    <TableCell>{format(request.submittingDate, 'PPP')}</TableCell>
+                    <TableCell className="text-center">{request.numberOfDays}</TableCell>
                     <TableCell>{format(request.startDate, 'PPP')}</TableCell>
                     <TableCell>{format(request.endDate, 'PPP')}</TableCell>
-                    <TableCell className="text-center">{request.numberOfDays}</TableCell>
-                    <TableCell>{request.vacationType}</TableCell>
-                    <TableCell>{format(request.submittingDate, 'PPP')}</TableCell>
                     <TableCell>{request.approvedFrom || 'N/A'}</TableCell>
                     <TableCell className="text-right">
                       <Badge
@@ -120,9 +120,9 @@ export default function NewVacationRequestPage() {
                             : 'destructive'
                         }
                         className={
-                           request.status === 'Approved' ? 'bg-green-500 hover:bg-green-600' 
-                           : request.status === 'Pending' ? 'bg-yellow-500 hover:bg-yellow-600' 
-                           : 'bg-red-500 hover:bg-red-600'
+                           request.status === 'Approved' ? 'bg-green-500 hover:bg-green-600 text-white' 
+                           : request.status === 'Pending' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' 
+                           : 'bg-red-500 hover:bg-red-600 text-white'
                         }
                       >
                         {request.status}
