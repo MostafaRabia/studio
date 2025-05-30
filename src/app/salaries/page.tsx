@@ -114,6 +114,7 @@ export default function SalariesPage() {
                       <TableHead className="text-right">Net Value</TableHead>
                       <TableHead>Benefits Description</TableHead>
                       <TableHead className="text-right">Benefits Value</TableHead>
+                      <TableHead className="text-right">Total Net Income</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -124,6 +125,7 @@ export default function SalariesPage() {
                         <TableCell className="text-right">${entry.netValue.toLocaleString()}</TableCell>
                         <TableCell>{entry.benefits}</TableCell>
                         <TableCell className="text-right">${entry.benefitsValue.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-semibold">${(entry.netValue + entry.benefitsValue).toLocaleString()}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
